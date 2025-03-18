@@ -569,6 +569,21 @@ h3 {
         transform: translateX(0);
     }
 }
+
+/* h5 */
+.blinking-text {
+    color: #e69600;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    animation: blink 1.5s infinite alternate;
+  }
+
+  @keyframes blink {
+    0% { opacity: 0.2; text-shadow: 0 0 5px #e69600, 0 0 10px #e69600; }
+    50% { opacity: 1; text-shadow: 0 0 10px #e69600, 0 0 20px #e69600; }
+    100% { opacity: 0.2; text-shadow: 0 0 5px #e69600, 0 0 10px #e69600; }
+  }
     </style>
 </head>
 <body>
@@ -608,6 +623,7 @@ h3 {
         <p id="walletBalance" style="display:none; color: #00ca09;">Balance: 0 ETH</p>
 
         <h2>Place Bet</h2>
+        <h5 class="blinking-text">Always use slippage to save transaction gas fees</h5><br>
         <input type="number" id="betNumber" placeholder="4D 3D or 2D" oninput="validateBetNumber()"><br>
         <input type="number" id="betTimes" placeholder="x1 / x99" min="1" max="99" oninput="validateBetTimes(); updateBetPrice()">
         <p id="betWarning" style="color: red;"></p>
