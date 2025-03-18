@@ -41,6 +41,8 @@ contract BetHistory {
     mapping(uint256 => uint256) public likeCounts;
     mapping(bytes32 => Comment[]) public betComments;
     mapping(address => uint256) public winnings;
+    mapping(uint256 => Bet) public bets;
+    mapping(uint256 => address[]) public betLikers;
 
     event BetPlaced(
         address indexed player,
@@ -59,6 +61,8 @@ contract BetHistory {
     event CommentDeleted(bytes32 betId, address indexed user, uint256 commentIndex);
     event WinnerSet(address indexed winner, uint256 amount);
     event ETHClaimed(address indexed winner, uint256 amount);
+    mapping(uint256 => Bet) public bets;
+    mapping(uint256 => address[]) public betLikers;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -125,11 +129,42 @@ contract BetHistory {
         emit ETHClaimed(msg.sender, amount);
     }
 
-    function likeBet(bytes32 betId) external {
-        require(!betLikes[betId][msg.sender], "You already liked this bet");
-        betLikes[betId][msg.sender] = true;
-        emit BetLiked(betId, msg.sender);
+    function likeBet(uint256 betId) public {
+        require(!bets[betId].likedBy[msg.sender], "You already liked this bet");
+        
+        bets[betId].likedBy[msg.sender] = true;
+        bets[betId].likeCount++;
+        betLikers[betId].push(msg.sender);
+
+        emit BetLiked(betId, msg.sender, bets[betId].likeCount);
     }
+
+    function dislikeBet(uint256 betId) public {
+        require(bets[betId].likedBy[msg.sender], "You haven't liked this bet");
+
+        bets[betId].likedBy[msg.sender] = false;
+        bets[betId].likeCount--;
+
+        // Hapus alamat dari daftar like
+        for (uint i = 0; i < betLikers[betId].length; i++) {
+            if (betLikers[betId][i] == msg.sender) {
+                betLikers[betId][i] = betLikers[betId][betLikers[betId].length - 1];
+                betLikers[betId].pop();
+                break;
+            }
+        }
+
+        emit BetDisliked(betId, msg.sender, bets[betId].likeCount);
+    }
+
+    function getAllLikes(uint256 betId) public view returns (address[] memory) {
+        return betLikers[betId];
+    }
+
+    function hasLiked(uint256 betId, address user) public view returns (bool) {
+        return bets[betId].likedBy[user];
+    }
+}
 
     function likeBet(uint256 betId) public {
         likeCounts[betId] += 1;
