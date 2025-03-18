@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Crystal Diamond</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: radial-gradient(circle, #0a0a0a, #000000);
+      overflow: hidden;
+    }
+    
+    .diamond {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      transform-style: preserve-3d;
+      animation: rotate 5s infinite linear;
+    }
+
+    .face {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, rgba(0,200,255,0.8), rgba(0,100,255,0.6));
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      opacity: 0.9;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+      transition: all 0.5s ease;
+    }
+
+    /* Bentuk Kristal */
+    .top { transform: rotateX(90deg) translateZ(50px); }
+    .bottom { transform: rotateX(-90deg) translateZ(50px); }
+    .front { transform: rotateY(0deg) translateZ(50px); }
+    .back { transform: rotateY(180deg) translateZ(50px); }
+    .left { transform: rotateY(-90deg) translateZ(50px); }
+    .right { transform: rotateY(90deg) translateZ(50px); }
+
+    /* Efek Berputar */
+    @keyframes rotate {
+      0% { transform: rotateX(0deg) rotateY(0deg); }
+      100% { transform: rotateX(360deg) rotateY(360deg); }
+    }
+
+    /* Efek Cahaya */
+    .diamond:hover .face {
+      opacity: 1;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="diamond">
+    <div class="face top"></div>
+    <div class="face bottom"></div>
+    <div class="face front"></div>
+    <div class="face back"></div>
+    <div class="face left"></div>
+    <div class="face right"></div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainbowKit Without npm</title>
+
+    <!-- React & ReactDOM via CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel (untuk JSX) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.21.0/babel.min.js"></script>
+
+    <!-- CSS RainbowKit -->
+    <link rel="stylesheet" href="https://unpkg.com/@rainbow-me/rainbowkit/dist/index.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Import library dengan UNPKG
+        const { createElement, StrictMode } = React;
+        const { createRoot } = ReactDOM;
+        
+        // Import library Wagmi & RainbowKit
+        async function loadDependencies() {
+            const wagmi = await import("https://unpkg.com/wagmi@1.1.4/dist/wagmi.js");
+            const rainbowkit = await import("https://unpkg.com/@rainbow-me/rainbowkit@1.0.0/dist/rainbowkit.js");
+            
+            const { configureChains, createClient, WagmiConfig } = wagmi;
+            const { getDefaultWallets, RainbowKitProvider, ConnectButton } = rainbowkit;
+            const { mainnet, polygon, bsc } = wagmi.chains;
+            const { publicProvider } = wagmi.providers;
+
+            // Konfigurasi blockchain & provider
+            const { chains, provider } = configureChains([mainnet, polygon, bsc], [publicProvider()]);
+            const { connectors } = getDefaultWallets({ appName: "My DApp", chains });
+
+            // Konfigurasi Wagmi Client
+            const wagmiClient = createClient({
+                autoConnect: true,
+                connectors,
+                provider,
+            });
+
+            // Komponen utama
+            function App() {
+                return createElement(WagmiConfig, { client: wagmiClient },
+                    createElement(RainbowKitProvider, { chains },
+                        createElement("div", null, 
+                            createElement("h1", null, "RainbowKit Without npm"),
+                            createElement(ConnectButton, null)
+                        )
+                    )
+                );
+            }
+
+            // Render ke root
+            const root = createRoot(document.getElementById("root"));
+            root.render(createElement(StrictMode, null, createElement(App)));
+        }
+
+        // Load dependencies dan jalankan aplikasi
+        loadDependencies();
+    </script>
+</body>
+</html>

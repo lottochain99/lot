@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulator Trading Kripto</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; text-align: center; } .container { max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); } .market, .trade { margin: 20px 0; } button { padding: 10px; margin: 5px; border: none; background: #28a745; color: white; border-radius: 5px; cursor: pointer; } button:hover { background: #218838; } canvas { max-width: 100%; margin: 20px 0; } ul { list-style-type: none; padding: 0; } li { background: #eee; margin: 5px 0; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulator Trading Kripto</h1>
+        <div class="market">
+            <label for="market">Pilih Aset:</label>
+            <select id="market" onchange="updateMarket()">
+                <option value="bitcoin">Bitcoin</option>
+                <option value="ethereum">Ethereum</option>
+                <option value="binancecoin">Binance Coin</option>
+            </select>
+        </div>
+        <h2>Saldo: <span id="balance">$10000</span></h2>
+        <h2>Harga Saat Ini: <span id="price">Loading...</span></h2><div class="trade">
+        <input type="number" id="amount" placeholder="Jumlah USD" min="1">
+        <button onclick="buyCrypto()">Beli</button>
+        <button onclick="sellCrypto()">Jual</button>
+    </div>
+    
+    <canvas id="priceChart"></canvas>
+    <h3>Riwayat Transaksi</h3>
+    <ul id="history"></ul>
+</div>
+<script>
+    let balance = 10000;
+    let holdings = 0;
+    let currentPrice = 0;
+    let market = "bitcoin";
+    let priceHistory = [];
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Harga Kripto',
+                data: [],
+                borderColor: 'blue',
+                borderWidth: 1,
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                x: { display: true },
+                y: { beginAtZero: false }
+            }
+        }
+    });
+    function fetchPrice() {
+        fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${market}&vs_currencies=usd`)
+            .then(response => response.json())
+            .then(data => {
+                currentPrice = data[market].usd;
+                document.getElementById('price').innerText = `$${currentPrice}`;
+                updateChart();
+            });
+    }
+    function updateChart() {
+        priceHistory.push(currentPrice);
+        if (priceHistory.length > 20) priceHistory.shift();
+        chart.data.labels = priceHistory.map((_, i) => i + 1);
+        chart.data.datasets[0].data = priceHistory;
+        chart.update();
+    }
+    function buyCrypto() {
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (amount > 0 && balance >= amount) {
+            balance -= amount;
+            holdings += amount / currentPrice;
+            updateUI(`Beli $${amount} ${market.toUpperCase()}`);
+        }
+    }
+    function sellCrypto() {
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (amount > 0 && holdings * currentPrice >= amount) {
+            balance += amount;
+            holdings -= amount / currentPrice;
+            updateUI(`Jual $${amount} ${market.toUpperCase()}`);
+        }
+    }
+    function updateUI(action) {
+        document.getElementById('balance').innerText = `$${balance.toFixed(2)}`;
+        const history = document.getElementById('history');
+        const li = document.createElement('li');
+        li.innerText = `${new Date().toLocaleTimeString()} - ${action}`;
+        history.prepend(li);
+    }
+    function updateMarket() {
+        market = document.getElementById('market').value;
+        priceHistory = [];
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        fetchPrice();
+    }
+    setInterval(fetchPrice, 5000);
+    fetchPrice();
+</script>
+
+</body>
+</html>

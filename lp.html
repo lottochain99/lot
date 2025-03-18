@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World History on Blockchain</title>
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="stylecss">
+    <style>
+      /* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Anonymous Pro', monospace;
+}
+
+/* BODY */
+body {
+    background: #f2f2f2;
+    color: #333;
+    text-align: center;
+    padding-top: 70px;
+}
+
+/* NAVBAR */
+nav {
+    position: fixed;
+    width: 100%;
+    background: #e0e0e0;
+    box-shadow: 4px 4px 10px #b8b8b8, -4px -4px 10px #ffffff;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    top: 0;
+    z-index: 1000;
+}
+
+nav .logo {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+nav ul li {
+    display: inline;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+nav ul li a:hover {
+    background: rgba(0, 0, 0, 0.1);
+}       
+        
+/* HERO SECTION */
+header {
+    padding: 100px 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+header h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+/* BUTTON */
+.cta-button {
+    display: inline-block;
+    background: #e0e0e0;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    box-shadow: 4px 4px 10px #b8b8b8, -4px -4px 10px #ffffff;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.cta-button:hover {
+    box-shadow: inset 4px 4px 10px #b8b8b8, inset -4px -4px 10px #ffffff;
+}
+
+/* FEATURES */
+#features {
+    padding: 60px 20px;
+}
+
+.features-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.feature {
+    width: 300px;
+    background: #e0e0e0;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 8px 8px 15px #b8b8b8, -8px -8px 15px #ffffff;
+    transition: transform 0.2s ease-in-out;
+}
+
+.feature:hover {
+    transform: scale(1.05);
+}
+
+/* HOW IT WORKS */
+#how-it-works {
+    padding: 60px 20px;
+}
+
+.steps {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.step {
+    width: 200px;
+    background: #e0e0e0;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 6px 6px 12px #b8b8b8, -6px -6px 12px #ffffff;
+    font-size: 16px;
+}
+
+/* CONTACT */
+#contact {
+    padding: 60px 20px;
+}
+
+#contact a {
+    color: #333;
+    font-weight: bold;
+}
+
+/* FOOTER */
+footer {
+    padding: 20px;
+    background: #e0e0e0;
+    box-shadow: 4px 4px 10px #b8b8b8, -4px -4px 10px #ffffff;
+    text-align: center;
+    font-size: 14px;
+}
+.social-media a {
+    margin: 0 15px;
+    display: inline-block;
+    font-size: 24px;
+    color: #333;
+    background: #e0e0e0;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    box-shadow: 6px 6px 10px #b8b8b8, -6px -6px 10px #ffffff;
+    transition: all 0.3s ease-in-out;
+}
+
+.social-media a:hover {
+    box-shadow: inset 6px 6px 10px #b8b8b8, inset -6px -6px 10px #ffffff;
+    transform: scale(1.1);
+    color: #007bff;
+        }
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        display: none; /* Sembunyikan awalnya */
+    }
+
+    nav ul.active {
+        display: flex; /* Tampilkan jika aktif */
+    }
+
+    .menu-toggle {
+        display: block;
+        cursor: pointer;
+        font-size: 24px;
+        padding: 10px;
+    }
+}
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+    <div class="logo">🌍 World History</div>
+    <div class="menu-toggle">☰</div>
+    <ul>
+        <li><a href="#features">Fitur</a></li>
+        <li><a href="#how-it-works">Cara Kerja</a></li>
+        <li><a href="#contact">Kontak</a></li>
+        <li><a href="app.html" class="cta-button">🚀 Mulai Sekarang</a></li>
+    </ul>
+ </nav>
+
+    <!-- Hero Section -->
+    <header>
+        <h1>Masa Lalu Tidak Bisa Hilang, <br> Abadikan Sejarah di Blockchain</h1>
+        <p>Catat peristiwa penting di blockchain untuk memastikan keasliannya selamanya.</p>
+        <a href="app.html" class="cta-button">🚀 Coba Sekarang</a>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features">
+        <h2>🔍 Fitur Utama</h2><br>
+        <hr><br>
+        <div class="features-container">
+            <div class="feature">
+                <h3>⏳ Permanen</h3><br>
+                <hr><br>
+                <p>Data sejarah yang dicatat tidak bisa dihapus atau diubah.</p>
+            </div>
+            <div class="feature">
+                <h3>🔗 Transparan</h3><br>
+                <hr><br>
+                <p>Semua orang bisa melihat catatan sejarah yang disimpan di blockchain.</p>
+            </div>
+            <div class="feature">
+                <h3>📜 Otentik</h3><br>
+                <hr><br>
+                <p>Sejarah diverifikasi dengan sistem smart contract yang aman.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works">
+        <h2>⚙️ Cara Kerja</h2><br>
+        <hr><br>
+        <div class="steps">
+            <div class="step">1️⃣ Hubungkan Wallet</div>
+            <div class="step">2️⃣ Masukkan Peristiwa Sejarah</div>
+            <div class="step">3️⃣ Konfirmasi dan Simpan di Blockchain</div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <h2>📞 Hubungi Kami</h2><br>
+        <hr><br>
+        <p>Jika ada pertanyaan, silakan hubungi kami di: <br><br> <a href="mailto:worldofhistory55@gmail.com">worldofhistory55@gmail.com</a></p>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+    <p>&copy; 2025 World History on Blockchain. Semua Hak Dilindungi.</p><br>
+    <hr><br>
+    <div class="social-media">
+        <a href="https://facebook.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+        <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-telegram"></i></a>
+        <a href="https://instagram.com/" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+    </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    const menuToggle = document.querySelector(".menu-toggle");
+    const navUl = document.querySelector("nav ul");
+
+    menuToggle.addEventListener("click", function () {
+        navUl.classList.toggle("active");
+    });
+});
+    </script>
+
+</body>
+</html>
