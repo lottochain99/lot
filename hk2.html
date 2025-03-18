@@ -435,6 +435,18 @@ footer {
             </div>
          </div>
 
+        // Comment Modal
+        <div id="commentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeComments()">&times;</span>
+        <h3>Komentar</h3>
+        <div id="commentsList"></div>
+        <button id="loadMoreComments" onclick="loadMoreComments()">Tampilkan lebih banyak</button>
+        <textarea id="commentInput" placeholder="Tulis komentar..."></textarea>
+        <button onclick="addComment()">Kirim</button>
+    </div>
+        </div>
+
         <!-- Footer -->
 <footer>
     <div class="social-icons">
@@ -727,13 +739,15 @@ async function loadBetHistory() {
         let shortTxHash = bet.txHash.slice(0, 10) + "..." + bet.txHash.slice(-10);
 
         html += `<p>
-            Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
-            BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
-            BetAmount: <span style="color: #00FF66;">${bet.betAmount}</span><br>
-            Tx: <span style="color: #fe6666;">${shortTxHash}</span><br>
-            Block: <a href="https://basescan.io/block/${bet.blockNumber}" target="_blank" style="color: #1a88ff;">${bet.blockNumber}</a><br>
-            Time: <span style="color: orange;">${new Date(bet.timestamp * 1000).toISOString()} UTC</span><br>
-        </p><hr style="background-color: #333333; height: 1px; border: none;">`;
+    Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
+    BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
+    BetAmount: <span style="color: #00FF66;">${bet.betAmount}</span><br>
+    Tx: <span style="color: #fe6666;">${shortTxHash}</span><br>
+    Block: <a href="https://basescan.io/block/${bet.blockNumber}" target="_blank" style="color: #1a88ff;">${bet.blockNumber}</a><br>
+    Time: <span style="color: orange;">${new Date(bet.timestamp * 1000).toISOString()} UTC</span><br>
+</p>
+<button class="comment-btn" data-betid="${bet.betId}" onclick="openComments('${bet.betId}')">(0)komentar</button>
+<hr style="background-color: #333333; height: 1px; border: none;">`;
     }
     document.getElementById("betHistory").innerHTML = html;
 }
@@ -749,6 +763,110 @@ function prevBetHistory() {
 function nextBetHistory() {
     betHistoryPage++;
     loadBetHistory();
+}
+
+// Comment Script
+let comments = {}; // Menyimpan komentar berdasarkan betId
+let currentBetId = null;
+let commentsPerLoad = 10;
+
+// Fungsi untuk membuka modal komentar
+function openComments(betId) {
+    currentBetId = betId;
+    if (!comments[betId]) {
+        comments[betId] = [];
+    }
+
+    document.getElementById('commentModal').style.display = 'block';
+    loadComments();
+}
+
+// Fungsi untuk menutup modal komentar
+function closeComments() {
+    document.getElementById('commentModal').style.display = 'none';
+}
+
+// Fungsi untuk memuat komentar pertama kali (5 komentar pertama)
+function loadComments() {
+    let commentsList = document.getElementById('commentsList');
+    commentsList.innerHTML = ''; 
+    let displayComments = comments[currentBetId].slice(0, 5);
+
+    displayComments.forEach((comment, index) => {
+        commentsList.innerHTML += generateCommentHTML(comment, index);
+    });
+
+    document.getElementById('loadMoreComments').style.display = (comments[currentBetId].length > 5) ? 'block' : 'none';
+}
+
+// Fungsi untuk memuat lebih banyak komentar (10 tambahan)
+function loadMoreComments() {
+    let commentsList = document.getElementById('commentsList');
+    let currentCount = commentsList.childNodes.length;
+    let moreComments = comments[currentBetId].slice(currentCount, currentCount + commentsPerLoad);
+
+    moreComments.forEach((comment, index) => {
+        commentsList.innerHTML += generateCommentHTML(comment, currentCount + index);
+    });
+
+    if (commentsList.childNodes.length >= comments[currentBetId].length) {
+        document.getElementById('loadMoreComments').style.display = 'none';
+    }
+}
+
+// Fungsi untuk menambah komentar
+function addComment() {
+    let commentText = document.getElementById('commentInput').value;
+    if (commentText.trim() === '') return alert("Komentar tidak boleh kosong!");
+
+    let newComment = {
+        commenter: "You", // Simulasi user
+        text: commentText,
+        timestamp: new Date().toISOString(),
+        isDeleted: false
+    };
+
+    comments[currentBetId].unshift(newComment); // Menambah di awal
+    document.getElementById('commentInput').value = '';
+    loadComments();
+    updateCommentCount();
+}
+
+// Fungsi untuk mengedit komentar
+function editComment(index) {
+    let newCommentText = prompt("Edit komentar:", comments[currentBetId][index].text);
+    if (newCommentText !== null && newCommentText.trim() !== '') {
+        comments[currentBetId][index].text = newCommentText;
+        loadComments();
+    }
+}
+
+// Fungsi untuk menghapus komentar
+function deleteComment(index) {
+    if (confirm("Hapus komentar ini?")) {
+        comments[currentBetId][index].isDeleted = true;
+        loadComments();
+        updateCommentCount();
+    }
+}
+
+// Fungsi untuk menghasilkan HTML komentar
+function generateCommentHTML(comment, index) {
+    if (comment.isDeleted) return `<p style="color: red;">[Komentar dihapus]</p>`;
+
+    return `
+        <p>
+            <strong>${comment.commenter}</strong>: ${comment.text} 
+            <button onclick="editComment(${index})">Edit</button> 
+            <button onclick="deleteComment(${index})">Hapus</button>
+        </p>
+    `;
+}
+
+// Fungsi untuk memperbarui jumlah komentar di tombol
+function updateCommentCount() {
+    let commentBtn = document.querySelector(`button[data-betid="${currentBetId}"]`);
+    commentBtn.innerText = `(${comments[currentBetId].length})komentar`;
 }
         
 // Fungsi untuk membuka modal berdasarkan ID
