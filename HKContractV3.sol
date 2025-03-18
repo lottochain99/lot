@@ -38,6 +38,7 @@ contract BetHistory {
     mapping(address => Bet[]) public userBets;
     mapping(uint256 => BetResult) public betResults;
     mapping(bytes32 => mapping(address => bool)) public betLikes;
+    mapping(uint256 => uint256) public likeCounts;
     mapping(bytes32 => Comment[]) public betComments;
     mapping(address => uint256) public winnings;
 
@@ -128,6 +129,14 @@ contract BetHistory {
         require(!betLikes[betId][msg.sender], "You already liked this bet");
         betLikes[betId][msg.sender] = true;
         emit BetLiked(betId, msg.sender);
+    }
+
+    function likeBet(uint256 betId) public {
+        likeCounts[betId] += 1;
+    }
+
+    function getLikeCount(uint256 betId) public view returns (uint256) {
+        return likeCounts[betId];
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
