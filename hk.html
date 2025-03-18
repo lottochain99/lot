@@ -188,8 +188,12 @@ th, td {
 }
 
 th {
-    background: linear-gradient(90deg, #03a9f4, #f441a5);
-    color: white;
+    background-color: #000000; /* Background hitam */
+    background-image: linear-gradient(90deg, #03a9f4, #f441a5); /* Gradasi untuk teks */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    padding: 10px;
 }
         
 footer {
@@ -628,6 +632,13 @@ h3 {
         <input type="number" id="betTimes" placeholder="x1 / x99" min="1" max="99" oninput="validateBetTimes(); updateBetPrice()">
         <p id="betWarning" style="color: red;"></p>
         <p id="betPrice" style="color: #00FF66; font-weight: bold;">Cost: 0.000000 ETH</p>
+        <label for="gasFee">Transaction Speed:</label>
+<select id="gasFee" onchange="updateGasFeeDisplay()">
+    <option value="slow">Slow (Cheap)</option>
+    <option value="market" selected>Market (Balanced)</option>
+    <option value="fast">Fast (Expensive)</option>
+</select>
+<p id="gasFeeEstimate">Estimated Fee: Calculating...</p>
         <button onclick="placeBet()">Place Bet</button>
         <p id="betStatus"></p>
        <br>
@@ -1236,6 +1247,69 @@ window.onload = () => {
         });
     }
 };
+    </script>
+
+    <script>
+async function updateGasFeeDisplay() {
+    const gasFees = await getGasFeeHistory();
+    const ethPrice = await getEthPrice(); // Ambil harga ETH real-time
+    if (!gasFees || !ethPrice) return;
+
+    let gasOption = document.getElementById("gasFee").value;
+    let gasPrice = gasFees[gasOption];
+
+    // Konversi ke ETH (Gas Price (Gwei) * Gas Limit (misal 21000) / 1e9)
+    let gasLimit = 21000;
+    let gasCostEth = (gasPrice * gasLimit) / 1e9;
+    let gasCostUsd = (gasCostEth * ethPrice).toFixed(2); // Konversi ke USD
+
+    document.getElementById("gasFeeEstimate").innerText = `Estimated Fee: ${gasCostEth.toFixed(6)} ETH (~$${gasCostUsd}) (${gasPrice.toFixed(2)} Gwei)`;
+}
+
+// Panggil saat halaman load
+window.addEventListener("load", updateGasFeeDisplay);
+
+async function getGasFeeHistory() {
+    if (!window.ethereum) {
+        console.error("MetaMask not detected");
+        return null;
+    }
+
+    try {
+        const feeHistory = await window.ethereum.request({
+            method: "eth_feeHistory",
+            params: [5, "latest", [25, 50, 90]], // Blok terakhir & percentiles (slow, market, fast)
+        });
+
+        if (!feeHistory || !feeHistory.baseFeePerGas || !feeHistory.reward) {
+            console.error("Invalid response from MetaMask");
+            return null;
+        }
+
+        const baseFee = parseInt(feeHistory.baseFeePerGas[feeHistory.baseFeePerGas.length - 1], 16) / 1e9;
+        const slow = (feeHistory.reward[0][0] ? parseInt(feeHistory.reward[0][0], 16) / 1e9 : 0) + baseFee;
+        const market = (feeHistory.reward[0][1] ? parseInt(feeHistory.reward[0][1], 16) / 1e9 : 0) + baseFee;
+        const fast = (feeHistory.reward[0][2] ? parseInt(feeHistory.reward[0][2], 16) / 1e9 : 0) + baseFee;
+
+        console.log(`Slow: ${slow} Gwei, Market: ${market} Gwei, Fast: ${fast} Gwei`);
+        return { slow, market, fast };
+    } catch (error) {
+        console.error("Error fetching gas fee history:", error);
+        return null;
+    }
+}
+
+// Fungsi untuk mengambil harga ETH real-time dari CoinGecko
+async function getEthPrice() {
+    try {
+        const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd");
+        const data = await response.json();
+        return data.ethereum.usd;
+    } catch (error) {
+        console.error("Error fetching ETH price:", error);
+        return null;
+    }
+}
     </script>
        
 </body>
