@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Winner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.0.3/web3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@700&display=swap" rel="stylesheet">
+    <style>
+body {
+    font-family: Ubuntu, sans-serif;
+    text-align: center;
+    width: 100vw;
+    height: 100vh;
+    background: #000000;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+/* Container */
+#container {
+    width: 85%;
+    max-width: 1150px;
+    padding: 20px;
+    background: rgba(0, 0, 50, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Button */
+button {
+    padding: 12px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    background: rgba(0, 0, 50, 0.7);
+    color: #ccc;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.7);
+    transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+    box-shadow: 0 0 20px rgba(0, 150, 255, 1);
+    transform: scale(1.05);
+}
+
+/* Input */
+input {
+    padding: 12px;
+    margin: 5px;
+    width: 80%;
+    max-width: 300px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: #F8F8FF;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+    transition: all 0.3s ease-in-out;
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+input:focus {
+    outline: none;
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.9);
+}
+
+/* Status */
+#status, #withdrawStatus {
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 150, 255, 0.7);
+}
+
+#walletAddress {
+    font-size: 12px;
+    color: #ccc;
+}
+    </style>
+</head>
+<body>
+
+    <div id="container">
+    <h2>Set Winner Dashboard Admin</h2>
+
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+    <p id="walletAddress">Wallet: Not Connected</p>
+    <p id="ownerStatus" style="color: red;"></p>
+
+    <h3>Set Winner</h3>
+    <input type="text" id="winnerAddress" placeholder="Winner Address"><br>
+    <input type="number" id="winnerAmount" placeholder="Amount ETH"><br>
+    <button onclick="setWinner()">✅ Set Winner</button>
+
+    <p id="status"></p>
+
+    <h3>Withdraw ETH (Only Owner)</h3>
+    <input type="number" id="withdrawAmount" placeholder="Amount ETH"><br>
+    <button onclick="withdrawETH()">💰 Withdraw</button>
+
+    <p id="withdrawStatus"></p>
+    </div>
+
+    <script src="app.js"></script>
+
+    <script>
+      const contractAddress = "0x410F02E143Ba921FEdda48830d545154F5E809ab"; // Ganti dengan alamat kontrak yang asli
+      const contractABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"}],"name":"BetLiked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":false,"internalType":"string","name":"number","type":"string"},{"indexed":false,"internalType":"uint256","name":"betAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"txHash","type":"bytes32"}],"name":"BetPlaced","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"drawId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"winningNumber","type":"uint256"}],"name":"BetResultSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"string","name":"comment","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"CommentAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"commentIndex","type":"uint256"}],"name":"CommentDeleted","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"commentIndex","type":"uint256"},{"indexed":false,"internalType":"string","name":"newComment","type":"string"}],"name":"CommentUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ETHClaimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WinnerSet","type":"event"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"string","name":"_comment","type":"string"}],"name":"addComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"betComments","outputs":[{"internalType":"address","name":"commenter","type":"address"},{"internalType":"string","name":"text","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bool","name":"isDeleted","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"betHistory","outputs":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"},{"internalType":"address","name":"","type":"address"}],"name":"betLikes","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"betPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"betResults","outputs":[{"internalType":"uint256","name":"drawId","type":"uint256"},{"internalType":"uint256","name":"winningNumber","type":"uint256"},{"internalType":"bool","name":"isProcessed","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimETH","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"contractBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"uint256","name":"commentIndex","type":"uint256"}],"name":"deleteComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"uint256","name":"commentIndex","type":"uint256"},{"internalType":"string","name":"newComment","type":"string"}],"name":"editComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getAllBets","outputs":[{"components":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"internalType":"struct BetHistory.Bet[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"}],"name":"getComments","outputs":[{"components":[{"internalType":"address","name":"commenter","type":"address"},{"internalType":"string","name":"text","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bool","name":"isDeleted","type":"bool"}],"internalType":"struct BetHistory.Comment[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getUserBets","outputs":[{"components":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"internalType":"struct BetHistory.Bet[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"}],"name":"likeBet","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"maxBet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"minBet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_number","type":"string"},{"internalType":"uint256","name":"_times","type":"uint256"},{"internalType":"bool","name":"_isETH","type":"bool"}],"name":"placeBet","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_drawId","type":"uint256"},{"internalType":"uint256","name":"_winningNumber","type":"uint256"}],"name":"setBetResult","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_winner","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"setWinner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"userBets","outputs":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"winnings","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"withdrawETH","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}];
+        
+let web3;
+let userAccount;
+let contract;
+let ownerAddress;
+
+// Wallet Connection
+async function connectWallet() {
+    if (window.ethereum) {
+        try {
+            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+            userAccount = accounts[0];
+            document.getElementById("walletAddress").innerText = "Wallet: " + userAccount;
+
+            web3 = new Web3(window.ethereum);
+            contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            // Check if the user is the owner
+            ownerAddress = await contract.methods.owner().call();
+            if (userAccount.toLowerCase() === ownerAddress.toLowerCase()) {
+                document.getElementById("ownerStatus").innerText = "✅ You Are the Owner!";
+                document.getElementById("ownerStatus").style.color = "green";
+            } else {
+                document.getElementById("ownerStatus").innerText = "🚫 You Are Not the Owner!";
+                document.getElementById("ownerStatus").style.color = "red";
+            }
+        } catch (error) {
+            console.error("Wallet Connection Error:", error);
+        }
+    } else {
+        alert("Metamask not found! Please install Metamask.");
+    }
+}
+
+// Set Winner (Only The Owner)
+async function setWinner() {
+    if (!userAccount) {
+        alert("Please connect your wallet first!");
+        return;
+    }
+
+    if (userAccount.toLowerCase() !== ownerAddress.toLowerCase()) {
+        alert("Only the owner can set the winner!");
+        return;
+    }
+
+    const winner = document.getElementById("winnerAddress").value;
+    const amount = document.getElementById("winnerAmount").value;
+
+    if (!winner || amount <= 0) {
+        alert("Enter a valid winner address and ETH amount!");
+        return;
+    }
+
+    const statusElement = document.getElementById("status");
+
+    statusElement.innerHTML = "";
+    const loadingIcon = document.createElement("img");
+    loadingIcon.src = "loading.svg";
+    loadingIcon.style.width = "20px";
+    loadingIcon.style.verticalAlign = "middle";
+    loadingIcon.style.marginRight = "5px";
+
+    statusElement.appendChild(loadingIcon);
+    statusElement.appendChild(document.createTextNode(" Sending transaction..."));
+    statusElement.style.color = "white";
+    try {
+        const tx = await contract.methods.setWinner(winner, web3.utils.toWei(amount, "ether"))
+            .send({ from: userAccount });
+
+        statusElement.innerHTML = ""; 
+
+        const successIcon = document.createElement("img");
+        successIcon.src = "success.svg";
+        successIcon.style.width = "20px";
+        successIcon.style.verticalAlign = "middle";
+        successIcon.style.marginRight = "5px";
+
+        const txLink = document.createElement("a");
+        txLink.href = `https://basescan.org/tx/${tx.transactionHash}`;
+        txLink.innerText = tx.transactionHash;
+        txLink.style.textDecoration = "none";
+        txLink.style.color = "blue";
+        txLink.style.fontSize = "8px";
+        txLink.target = "_blank";
+
+        // Update status
+        statusElement.appendChild(successIcon);
+        statusElement.appendChild(document.createTextNode(" Winner Added! Tx: "));
+        statusElement.appendChild(txLink);
+        statusElement.style.color = "green";
+    } catch (error) {
+        console.error("Transaction Error:", error);
+
+        statusElement.innerHTML = "";
+
+        const errorIcon = document.createElement("img");
+        errorIcon.src = "error.svg";
+        errorIcon.style.width = "20px";
+        errorIcon.style.verticalAlign = "middle";
+        errorIcon.style.marginRight = "5px";
+
+        statusElement.appendChild(errorIcon);
+        statusElement.appendChild(document.createTextNode(" Failed to send transaction!"));
+        statusElement.style.color = "red";
+    }
+}
+
+// Withdraw ETH (Only The Owner)
+async function withdrawETH() {
+    if (!userAccount) {
+        alert("Please connect your wallet first!");
+        return;
+    }
+
+    if (userAccount.toLowerCase() !== ownerAddress.toLowerCase()) {
+        alert("Only the owner can withdraw!");
+        return;
+    }
+
+    const amount = document.getElementById("withdrawAmount").value;
+
+    if (!amount || amount <= 0) {
+        alert("Enter a valid ETH amount!");
+        return;
+    }
+
+    const statusElement = document.getElementById("withdrawStatus");
+
+    statusElement.innerHTML = "";  
+    const loadingIcon = document.createElement("img");
+    loadingIcon.src = "loading.svg";
+    loadingIcon.style.width = "20px";
+    loadingIcon.style.verticalAlign = "middle";
+    loadingIcon.style.marginRight = "5px";
+
+    statusElement.appendChild(loadingIcon);
+    statusElement.appendChild(document.createTextNode(" Sending transaction..."));
+    statusElement.style.color = "white";
+
+    try {
+        const tx = await contract.methods.withdrawETH(web3.utils.toWei(amount, "ether"))
+            .send({ from: userAccount });
+
+        statusElement.innerHTML = "";  
+
+        const successIcon = document.createElement("img");
+        successIcon.src = "success.svg";
+        successIcon.style.width = "20px";
+        successIcon.style.verticalAlign = "middle";
+        successIcon.style.marginRight = "5px";
+
+        const txLink = document.createElement("a");
+        txLink.href = `https://basescan.org/block/${tx.transactionHash}`;
+        txLink.innerText = tx.transactionHash;
+        txLink.style.textDecoration = "none";
+        txLink.style.color = "blue";
+        txLink.style.fontSize = "8px";
+        txLink.target = "_blank";
+
+        statusElement.appendChild(successIcon);
+        statusElement.appendChild(document.createTextNode(" Withdraw Successful! Tx: "));
+        statusElement.appendChild(txLink);
+        statusElement.style.color = "green";
+    } catch (error) {
+        console.error("Transaction Error:", error);
+
+        statusElement.innerHTML = "";
+
+        const errorIcon = document.createElement("img");
+        errorIcon.src = "error.svg";
+        errorIcon.style.width = "20px";
+        errorIcon.style.verticalAlign = "middle";
+        errorIcon.style.marginRight = "5px";
+
+        statusElement.appendChild(errorIcon);
+        statusElement.appendChild(document.createTextNode(" Failed to withdraw!"));
+        statusElement.style.color = "red";
+    }
+}
+    </script>
+
+</body>
+</html>

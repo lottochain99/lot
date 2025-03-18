@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presale Token</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.4/web3.min.js"></script>
+    <style>
+        /* Styling dengan animasi */
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            color: white;
+            background: black;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://source.unsplash.com/1600x900/?milkyway,galaxy,stars') no-repeat center center/cover;
+            z-index: -2;
+        }
+
+        .container {
+            width: 50%;
+            margin: auto;
+            padding: 20px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #ff4b2b, #ff416c);
+        }
+
+        .progress {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(45deg, #00ffcc, #00ff99);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+            width: 120px;
+            text-align: center;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Presale Token</h1>
+        <button class="btn" id="wallet-btn" onclick="toggleWallet()">Konek Wallet</button>
+        <p id="balance"></p>
+        <p><strong>Progress:</strong> <span id="progress-text">0% (0 / 100 ETH)</span></p>
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+
+        <input type="number" id="ethAmount" placeholder="Masukkan ETH" step="0.01" oninput="calculateTokens()">
+        <p><strong>Anda akan mendapatkan:</strong> <span id="tokenAmount">0</span> TOKEN</p>
+
+        <button class="btn" onclick="buyTokens()">Beli Token</button>
+        <button class="btn" onclick="claimTokens()">Klaim Token</button>
+
+        <p id="status" style="color: red;"></p>
+    </div>
+
+    <script>
+        const contractAddress = "0xYOUR_CONTRACT_ADDRESS";
+        const abi = [ /* ABI Kontrak */ ];
+        let web3, contract, walletAddress = null;
+        const rate = 365487;
+
+        async function toggleWallet() {
+            if (!walletAddress) {
+                await connectWallet();
+            } else {
+                disconnectWallet();
+            }
+        }
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    web3 = new Web3(window.ethereum);
+                    const accounts = await web3.eth.requestAccounts();
+                    walletAddress = accounts[0];
+                    contract = new web3.eth.Contract(abi, contractAddress);
+                    document.getElementById("wallet-btn").innerText = "Diskonek Wallet";
+                    getBalance();
+                } catch (error) {
+                    alert("Gagal koneksi wallet!");
+                }
+            } else {
+                alert("Silakan install MetaMask!");
+            }
+        }
+
+        function disconnectWallet() {
+            walletAddress = null;
+            contract = null;
+            document.getElementById("wallet-btn").innerText = "Konek Wallet";
+            document.getElementById("balance").innerText = "";
+            alert("Wallet terputus!");
+        }
+
+        async function getBalance() {
+            if (walletAddress) {
+                try {
+                    const balance = await web3.eth.getBalance(walletAddress);
+                    document.getElementById("balance").innerText = `Saldo ETH: ${web3.utils.fromWei(balance, "ether")} ETH`;
+                } catch (error) {
+                    console.error("Gagal mengambil saldo:", error);
+                }
+            }
+        }
+
+        function calculateTokens() {
+            let ethInput = parseFloat(document.getElementById("ethAmount").value);
+            document.getElementById("tokenAmount").innerText = ethInput > 0 ? (ethInput * rate).toLocaleString() : "0";
+        }
+
+        async function buyTokens() {
+            let ethInput = parseFloat(document.getElementById("ethAmount").value);
+            if (!walletAddress || isNaN(ethInput) || ethInput < 0.05 || ethInput > 10) {
+                alert("Masukkan jumlah ETH yang valid!");
+                return;
+            }
+
+            try {
+                await web3.eth.sendTransaction({
+                    from: walletAddress,
+                    to: contractAddress,
+                    value: web3.utils.toWei(ethInput.toString(), "ether")
+                });
+
+                alert("Pembelian berhasil!");
+            } catch (error) {
+                alert("Transaksi gagal!");
+            }
+        }
+
+        // Fungsi klaim token
+async function claimTokens() {
+    if (!contract) {
+        alert("Kontrak belum terhubung!");
+        return;
+    }
+
+    try {
+        const accounts = await web3.eth.getAccounts();
+        const claimableTokens = await contract.methods.getClaimableTokens(accounts[0]).call();
+
+        // Pastikan ada token yang bisa diklaim
+        if (claimableTokens <= 0) {
+            alert("Tidak ada token yang bisa diklaim.");
+            return;
+        }
+
+        // Panggil fungsi klaim dari kontrak
+        await contract.methods.claimTokens().send({ from: accounts[0] });
+
+        alert("Token berhasil diklaim!");
+    } catch (error) {
+        console.error("Gagal mengklaim token:", error);
+        alert("Terjadi kesalahan saat mengklaim token. Silakan coba lagi.");
+    }
+}
+    </script>
+
+</body>
+</html>

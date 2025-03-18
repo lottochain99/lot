@@ -1,0 +1,706 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LottoBalls Lottery</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+    html, body {
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    margin: 0;
+    padding: 20px;
+    width: 100vw;
+    overflow-y: auto;
+    }
+            
+        .buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    button {
+        padding: 15px 35px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: white;
+        background: linear-gradient(135deg, #00b7ff, #007bff);
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 183, 255, 0.8);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 30px rgba(0, 183, 255, 1);
+    }
+
+    .section-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    margin: 20px; /* Pastikan margin auto agar tetap di tengah */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 183, 255, 0.2);
+    max-width: 900px;
+    width: 108%; /* Pastikan memenuhi parent */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    }
+
+.input-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 3px 2px 15px 2px;
+}
+
+.input-container input {
+    width: 55px;
+    aspect-ratio: 1/1;
+    text-align: center;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    background: #f9f9f9;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease-in-out;
+}
+
+.input-container input:focus {
+    outline: none;
+    border-color: #00b7ff;
+    background: #ffffff;
+    box-shadow: 3px 3px 8px rgba(0, 183, 255, 0.4), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+}
+        
+    #betHistory {
+        text-align: left;
+        display: block;
+        width: 108%;
+        max-width: 900px;
+        margin: center;
+    }
+
+    .form-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-group-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        label {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        select {
+            font-size: 16px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        p {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 5px;
+    display: block; /* Pastikan elemen tetap blok */
+    width: 100%; /* Sesuai lebar kontainer */
+        }
+
+        input[type="checkbox"] {
+            transform: scale(2);
+            margin-left: 10px;
+        }
+
+        /* Reset dasar */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* === NAVIGASI MENU === */
+.navbar {
+    position: fixed;
+    bottom: 0; /* Bisa diubah ke top: 0 jika ingin di atas */
+    width: 100%;
+    background: rgba(22, 33, 62, 0.6);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0;
+    backdrop-filter: blur(10px);
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.3s ease-in-out;
+}
+
+.navbar a:hover {
+    background: rgba(22, 33, 62, 0.4);
+}
+
+/* === MEDIA QUERY UNTUK HP === */
+@media (max-width: 600px) {
+    .navbar a {
+        font-size: 14px;
+    }
+}
+
+/* === MEDIA QUERY UNTUK PC (LAYAR LEBIH BESAR) === */
+@media (min-width: 1024px) {
+    .navbar {
+        padding: 20px 0; /* Tambah tinggi navbar */
+    }
+    .navbar a {
+        font-size: 22px; /* Perbesar teks menu */
+        padding: 15px; /* Perbesar area klik */
+    }
+}
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-content {
+            background-color: rgba(22, 33, 62, 0.8);
+            color: white;
+            margin: 15% auto;
+            padding: 20px;
+            width: 300px;
+            border-radius: 5px;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-content a {
+            display: block;
+            padding: 10px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .modal-content a {
+            border-bottom: 1px solid #454d65;
+        }
+
+        .modal-content a:hover {
+            background-color: rgba(22, 33, 62, 0.4);
+        }
+
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Animasi Muncul */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+    /* Prizes */
+table {
+    width: 100%; /* Bisa diperkecil lagi, misalnya 50% jika terlalu lebar */
+    max-width: 500px; /* Agar tabel tidak terlalu besar di layar lebar */
+    border-collapse: collapse;
+    margin: 20px auto; /* 'auto' agar tabel tetap di tengah */
+    font-size: 18px; /* Kecilkan agar tabel lebih compact */
+    text-align: left;
+}
+
+th, td {
+    padding: 8px; /* Kurangi padding agar tabel lebih kecil */
+    border: 1px solid #ddd;
+}
+
+th {
+    background: linear-gradient(135deg, #00b7ff, #007bff);
+    color: white; /* Agar teks lebih kontras */
+}
+</style>
+
+</head>
+<body>
+    <div class=section-box>
+    <h2>Lottoballs Lottery</h2><div class="buttons">
+    <center>
+        <img src="gambar.png" alt="Lottoballs Logo" width="150">
+    </center>
+    <center><button id="walletButton" onclick="toggleWallet()">🔗 Connect Wallet</button><br>
+    <p id="walletAddress">Not connected</p>
+    <p id="ethBalance">ETH Balance: -</p>
+    <p id="usdtBalance">USDT Balance: -</p>
+    <p id="signature">Signature: -</p></center>
+    </div>
+
+<div class="section-box">
+    <h3>Choose Numbers</h3><br>
+    <div class="input-container">
+        <input type="number" id="num1" min="1" max="69" placeholder="1/69" oninput="validateInput(this)">
+        <input type="number" id="num2" min="1" max="69" placeholder="1/69" oninput="validateInput(this)">
+        <input type="number" id="num3" min="1" max="69" placeholder="1/69" oninput="validateInput(this)">
+        <input type="number" id="num4" min="1" max="69" placeholder="1/69" oninput="validateInput(this)">
+        <input type="number" id="num5" min="1" max="69" placeholder="1/69" oninput="validateInput(this)">
+    </div><br>
+    
+    <h3>Choose Lottoballs Numbers</h3>
+<div class="input-container">
+    <input type="number" id="powerball" min="1" max="26" placeholder="1/26" oninput="validateInputII(this)">
+</div>
+<br>
+
+    <div class="form-group">
+            <label>Bet Currency:</label>
+            <select id="currency">
+                <option value="USDT">USDT</option>
+                <option value="ETH">ETH</option>
+            </select>
+        </div>
+    <div>
+        <p id="betPrice" style="font-size: 16px; font-weight: bold; color: #33ff33; font-family: 'Courier New', monospace; background: #101010; padding: 5px 10px; border-radius: 5px; display: inline-block;">
+    Bet Price: 2 USDT
+        </p>
+    </div><br>
+
+        <div class="form-group">
+            <label>LottoPlay ×2:</label>
+            <input type="checkbox" id="powerplay" onchange="updateBetPrice()">
+        </div>
+        <br><br>
+
+    <button onclick="placeBet()">Place Bet</button><br>
+</div>
+
+<div class="section-box" id="betHistory">
+    <center><h3>Bet History</h3>
+    <button onclick="fetchBetHistory()">🔍 Refresh History</button></center><br>
+</div>
+
+        <div class="section-box">
+        <center><h3>Pool Now</h3>
+        <div id="poolDisplay">Loading...</div></center><br>
+        </div>
+
+        <!-- Prize Table -->
+        <div id="prizes" class="section-box">
+        <center><h2>Lottery USDT Prize Payouts</h2></center>
+            <table>
+                <tr>
+                    <th>Bet Type</th>
+                    <th>Compatibility</th>
+                    <th>Prize (USDT)</th>
+                </tr>
+                <tr>
+                    <td>Jackpot</td>
+                    <td>5 Numbers + LottoBalls</td>
+                    <td>All Pools USDT + ETH</td>
+                </tr>
+                <tr>
+                    <td>2nd</td>
+                    <td>5 Numbers</td>
+                    <td>50% Pools USDT + ETH</td>
+                </tr>
+                <tr>
+                    <td>3rd</td>
+                    <td>4 Numbers + LottoBalls</td>
+                    <td>25% Pools USDT + ETH</td>
+                </tr>
+                <tr>
+                    <td>4th</td>
+                    <td>4 Numbers</td>
+                    <td>100 USDT</td>
+                </tr>
+                <tr>
+                    <td>5th</td>
+                    <td>3 Numbers + LottoBalls</td>
+                    <td>100 USDT</td>
+                </tr>
+                <tr>
+                    <td>6th</td>
+                    <td>3 Numbers</td>
+                    <td>7 USDT</td>
+                </tr>
+                <tr>
+                    <td>7th</td>
+                    <td>2 Numbers + LottoBalls</td>
+                    <td>7 USDT</td>
+                </tr>
+                <tr>
+                    <td>8th</td>
+                    <td>1 Numbers + LottoBalls</td>
+                    <td>4 USDT</td>
+                </tr>
+                <tr>
+                    <td>9th</td>
+                    <td>LottoBalls Only</td>
+                    <td>4 USDT</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Prize Table -->
+        <div id="prizes" class="section-box">
+        <center><h2>Lottery ETH Prize Payouts</h2></center>
+            <table>
+                <tr>
+                    <th>Bet Type</th>
+                    <th>Compatibility</th>
+                    <th>Prize (ETH)</th>
+                </tr>
+                <tr>
+                    <td>Jackpot</td>
+                    <td>5 Numbers + LottoBalls</td>
+                    <td>All Pools ETH + USDT</td>
+                </tr>
+                <tr>
+                    <td>2nd</td>
+                    <td>5 Numbers</td>
+                    <td>50% Pools ETH + USDT</td>
+                </tr>
+                <tr>
+                    <td>3rd</td>
+                    <td>4 Numbers + LottoBalls</td>
+                    <td>25% Pools ETH + USDT</td>
+                </tr>
+                <tr>
+                    <td>4th</td>
+                    <td>4 Numbers</td>
+                    <td>0.036 ETH</td>
+                </tr>
+                <tr>
+                    <td>5th</td>
+                    <td>3 Numbers + LottoBalls</td>
+                    <td>0.036 ETH</td>
+                </tr>
+                <tr>
+                    <td>6th</td>
+                    <td>3 Numbers</td>
+                    <td>0.00252 ETH</td>
+                </tr>
+                <tr>
+                    <td>7th</td>
+                    <td>2 Numbers + LottoBalls</td>
+                    <td>0.00252 ETH</td>
+                </tr>
+                <tr>
+                    <td>8th</td>
+                    <td>1 Numbers + LottoBalls</td>
+                    <td>0.00144 ETH</td>
+                </tr>
+                <tr>
+                    <td>9th</td>
+                    <td>LottoBalls Only</td>
+                    <td>0.00144 ETH</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Menu Navigasi Seperti Aplikasi -->
+    <div class="navbar">
+        <a href="#" id="menuBtn">🗂️ Menu</a>
+        <a href="4d" target="_blank">🔢 4D</a>
+        <a href="lottoballs" target="_blank">🎰 Lott</a>
+        <a href="#" id="openBet">🎲 MyBet</a>
+        <a href="#" target="_blank">🎱 Result</a>
+        <a href="#" target="_blank">💰 Claim</a>
+    </div>
+
+    <!-- Modal -->
+    <div id="menuModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <a href="hk" target="_blank">🇭🇰 Hong Kong (HK)</a>
+            <a href="sgp" target="_blank">🇸🇬 Singapore (SGP)</a>
+            <a href="syd" target="_blank">🇦🇺 Sydney (SYD)</a>
+            <a href="chi" target="_blank">🇨🇳 China (CHI)</a>
+            <a href="mc" target="_blank">🇰🇭 Cambodia (MC)</a>
+            <a href="be" target="_blank">🎯 Bull Eye (BE)</a>
+            <a href="lottery">🎰 LottoBalls (Lottery)</a>
+        </div>
+    </div>
+    
+<script>
+        let web3;
+        let account;
+        const contractAddress = "0xYourContractAddress"; // Ganti dengan alamat kontrak
+        const contractABI = [ /* Masukkan ABI Smart Contract */ ];
+        const usdtAddress = "0xYourUSDTContract"; // Ganti dengan alamat token USDT
+        const usdtABI = [ /* ABI ERC-20 */ ];
+        const BASE_SEPOLIA_CHAIN_ID = "0x14A34";
+
+        async function switchToBaseSepolia() {
+            if (!window.ethereum) {
+                alert("Metamask is required!");
+                return false;
+            }
+
+            try {
+                const currentChainId = await window.ethereum.request({ method: "eth_chainId" });
+                if (currentChainId === BASE_SEPOLIA_CHAIN_ID) {
+                    console.log("Already on Base Sepolia!");
+                    return true;
+                }
+
+                await window.ethereum.request({
+                    method: "wallet_switchEthereumChain",
+                    params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+                });
+
+                console.log("Switched to Base Sepolia!");
+                return true;
+            } catch (error) {
+                if (error.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [{
+                                chainId: BASE_SEPOLIA_CHAIN_ID,
+                                chainName: "Base Sepolia",
+                                rpcUrls: ["https://sepolia.base.org"],
+                                nativeCurrency: {
+                                    name: "ETH",
+                                    symbol: "ETH",
+                                    decimals: 18
+                                },
+                                blockExplorerUrls: ["https://sepolia.basescan.org"]
+                            }]
+                        });
+
+                        console.log("Base Sepolia added and switched!");
+                        return true;
+                    } catch (addError) {
+                        console.error("Failed to add Base Sepolia network", addError);
+                        alert("Failed to add Base Sepolia. Please add it manually in Metamask.");
+                        return false;
+                    }
+                } else {
+                    console.error("Failed to switch network", error);
+                    alert("Please switch to Base Sepolia Testnet manually.");
+                    return false;
+                }
+            }
+        }
+
+        async function toggleWallet() {
+            if (account) {
+                account = null;
+                document.getElementById("walletAddress").innerText = "Not connected";
+                document.getElementById("walletButton").innerText = "🔗 Connect Wallet";
+                document.getElementById("ethBalance").innerText = "ETH Balance: -";
+                document.getElementById("usdtBalance").innerText = "USDT Balance: -";
+                document.getElementById("signature").innerText = "Signature: -";
+            } else {
+                if (window.ethereum) {
+                    web3 = new Web3(window.ethereum);
+                    try {
+                        const switched = await switchToBaseSepolia();
+                        if (!switched) return;
+
+                        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+                        account = accounts[0];
+                        document.getElementById("walletAddress").innerText = `Connected: ${account}`;
+                        document.getElementById("walletButton").innerText = "❌ Disconnect";
+
+                        await signMessage();
+                        await fetchBalances();
+                    } catch (error) {
+                        console.error("Wallet connection failed", error);
+                    }
+                } else {
+                    alert("Please install Metamask!");
+                }
+            }
+        }
+
+        async function signMessage() {
+            if (!account) {
+                alert("Connect your wallet first!");
+                return;
+            }
+
+            try {
+                const message = `Sign in to LottoBalls\n\nWallet: ${account}\nTimestamp: ${Date.now()}`;
+                const signature = await ethereum.request({
+                    method: "personal_sign",
+                    params: [message, account],
+                });
+
+                document.getElementById("signature").innerText = `Signature: ${signature.slice(0, 10)}...`;
+                console.log("Full Signature:", signature);
+            } catch (error) {
+                console.error("Failed to sign message", error);
+                alert("Signing failed!");
+            }
+        }
+
+        async function fetchBalances() {
+            if (!account) return;
+
+            const balanceWei = await web3.eth.getBalance(account);
+            const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+            document.getElementById("ethBalance").innerText = `ETH Balance: ${balanceEth} ETH`;
+        }
+
+    // Input Required
+    function validateInput(input) {
+    let value = parseInt(input.value, 10);
+
+    if (isNaN(value) || value < 1 || value > 69) {
+        input.value = "";
+    }
+}
+
+function validateInputII(input) {
+    let value = parseInt(input.value, 10);
+
+    if (isNaN(value) || value < 1 || value > 26) {
+        input.value = "";
+    }
+}
+
+//Price
+function updateBetPrice() {
+    const currency = document.getElementById("currency").value;
+    const powerplay = document.getElementById("powerplay").checked;
+    const betPriceDisplay = document.getElementById("betPrice");
+
+    let basePriceUSDT = 2; // Harga dasar USDT
+    let basePriceETH = 0.00072; // Harga dasar ETH
+    let powerplayUSDT = 1; // Tambahan USDT jika LottoPlay aktif
+    let powerplayETH = 0.00036; // Tambahan ETH jika LottoPlay aktif
+
+    let finalPrice = currency === "USDT" ? basePriceUSDT : basePriceETH;
+
+    if (powerplay) {
+        finalPrice += currency === "USDT" ? powerplayUSDT : powerplayETH;
+    }
+
+    betPriceDisplay.textContent = `Bet Price: ${finalPrice} ${currency}`;
+}
+
+function placeBet() {
+    const currency = document.getElementById("currency").value;
+    const powerplay = document.getElementById("powerplay").checked;
+    let betAmount = currency === "USDT" ? 2 : 0.00072;
+
+    if (powerplay) {
+        betAmount += currency === "USDT" ? 1 : 0.00036;
+    }
+
+    alert(`Bet placed with amount: ${betAmount} ${currency}`);
+}
+
+// Pastikan saat pertama kali halaman dimuat, harga bet sudah tampil sesuai pilihan
+document.getElementById("currency").addEventListener("change", updateBetPrice);
+window.onload = updateBetPrice;
+
+// Open Modal
+    var modal = document.getElementById("menuModal");
+        var btn = document.getElementById("menuBtn");
+        var closeBtn = document.querySelector(".close");
+
+        // Buka modal saat menu diklik
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // Tutup modal saat tombol "X" diklik
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Tutup modal jika klik di luar modal
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+    // Fungsi untuk membuka about modal
+        function openModal() {
+            document.getElementById("aboutModal").style.display = "block";
+        }
+
+        // Fungsi untuk menutup modal
+        function closeModal() {
+            document.getElementById("aboutModal").style.display = "none";
+        }
+
+        // Event listener untuk tombol about
+        document.getElementById("openAbout").addEventListener("click", function () {
+            openModal();
+        });
+
+        // Tutup modal jika klik di luar kontennya
+        window.onclick = function (event) {
+            if (event.target.classList.contains("modal")) {
+                closeModal();
+            }
+        };
+
+    // Pool Update
+    async function updatePool() {
+        try {
+            const poolUSDT = await contract.methods.getPoolUSDT().call();
+            const poolETH = await contract.methods.getPoolETH().call();
+
+            document.getElementById("poolDisplay").innerHTML = 
+                `💰 <b>${poolUSDT} USDT</b> & <b>${poolETH} ETH</b>`;
+        } catch (error) {
+            console.error("Gagal mengambil data pool:", error);
+        }
+    }
+
+    updatePool(); // Ambil data saat pertama kali
+    setInterval(updatePool, 5000); // Perbarui otomatis setiap 5 detik
+</script>
+                                
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bet History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+    font-family: 'Ubuntu', sans-serif;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 1000px;
+    background-color: #000;
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    font-size: 16px;
+    padding-top: 70px; /* Memberikan ruang untuk navbar */
+}
+        
+/* Container */
+.container {
+    width: 100%;
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+    background: #000000;
+    box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-sizing: border-box;
+    align-items: center;
+    margin-top: 20px; /* Tambahkan jarak dari navbar */
+}
+
+h1, h2 {
+    background: linear-gradient(90deg, #03a9f4, #f441a5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+h3 {
+    color: white;
+    font-size: 17px;
+    text-shadow: 0px 0px 10px #00aaff, 0px 0px 20px #0088ff;
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    overflow-x: auto; /* Agar bisa di-scroll pada layar kecil */
+    display: block;
+    max-width: 100%;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Garis tipis transparan */
+    text-align: left;
+    font-size: 14px; /* Ukuran lebih kecil agar pas di HP */
+}
+
+/* Glassmorphism + Shadow Biru (Tetap Kotak) */
+th {
+    background: linear-gradient(135deg, rgba(245, 245, 220, 0.3), rgba(255, 255, 255, 0.1)); /* Gradient transparan */
+    color: white;
+    backdrop-filter: blur(10px); /* Efek kaca */
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 255, 0.6); /* Shadow biru */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Efek hover */
+th:hover {
+    box-shadow: 0 0 20px rgba(0, 0, 255, 1); /* Shadow lebih terang saat hover */
+}
+
+/* Responsif untuk layar kecil */
+@media screen and (max-width: 600px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 12px; /* Lebih kecil di HP */
+    }
+
+    button {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
+#searchInput {
+    background: rgba(255, 255, 255, 0.2); /* Transparan seperti kaca */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Garis batas tipis */
+    border-radius: 10px; /* Sudut melengkung */
+    padding: 10px 15px 10px 40px; /* Ruang untuk ikon di kiri */
+    font-size: 16px;
+    color: white;
+    backdrop-filter: blur(10px); /* Efek blur */
+    box-shadow: 0 0 10px rgba(0, 0, 255, 0.6); /* Cahaya biru */
+    outline: none;
+    transition: box-shadow 0.3s ease-in-out;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="%23ffffff" d="M508.5 481.6l-129.9-129.9c31.2-41.8 49.9-93.9 49.9-150.6C428.5 90.4 338.1 0 222.5 0S16.5 90.4 16.5 201.1s90.4 201.1 201.1 201.1c56.7 0 108.8-18.7 150.6-49.9l129.9 129.9c6.2 6.2 16.4 6.2 22.6 0l22.6-22.6c6.3-6.2 6.3-16.4.1-22.6zM60.5 201.1c0-89.5 72.6-162.1 162.1-162.1s162.1 72.6 162.1 162.1-72.6 162.1-162.1 162.1-162.1-72.6-162.1-162.1z"/></svg>'); 
+    background-repeat: no-repeat;
+    background-size: 20px;
+    background-position: 10px center;
+}
+
+/* Efek saat input difokuskan */
+#searchInput:focus {
+    box-shadow: 0 0 20px rgba(0, 0, 255, 1); /* Cahaya lebih terang saat diklik */
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px); 
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 950px;
+    z-index: 1000;
+    height: 60px; /* Tambahkan tinggi navbar agar lebih jelas */
+}
+
+/* Logo */
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+/* Menu Links */
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: white;
+    transition: 0.3s;
+}
+
+.nav-links a:hover {
+    color: #00ff66;
+}
+
+/* Hamburger Button */
+.hamburger {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* Efek Hover Hamburger */
+.hamburger:hover {
+    transform: rotate(90deg) scale(1.2);
+    color: #00ff66;
+}
+
+/* Responsive - Mobile */
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background: #222;
+        width: 200px;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .nav-links.show {
+        display: flex;
+        flex-direction: column;
+        transform: translateX(0);
+        animation: slideIn 0.3s ease-in-out;
+    }
+}
+
+/* Animasi Slide-in Menu */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+        
+    footer {
+        text-align: center;
+        margin-top: 20px;
+        padding: 10px;
+        background: #111; /* Warna gelap */
+        color: #ddd; /* Warna teks */
+        font-size: 12px;
+        width: 100%;
+        max-width: 1000px;
+    }
+
+    .social-icons {
+        margin-bottom: 10px;
+    }
+
+    .social-icons a {
+    background: rgba(255, 255, 255, 0.2); /* Transparan seperti kaca */
+    border-radius: 10px; /* Agar sedikit membulat */
+    padding: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white; /* Warna ikon */
+    font-size: 15px;
+    margin: 0 5px;
+    text-decoration: none;
+    transition: transform 0.5s ease, text-shadow 0.5s ease, box-shadow 0.5s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 255, 0.6); /* Cahaya biru */
+    backdrop-filter: blur(10px); /* Efek blur kaca */
+}
+
+/* Efek saat hover */
+.social-icons a:hover {
+    color: #1a88ff; /* Warna biru neon */
+    text-shadow: 0 0 10px #1a88ff, 0 0 20px #1a88ff, 0 0 30px #1a88ff; /* Glow lebih intens */
+    box-shadow: 0 0 20px rgba(0, 0, 255, 1), 0 0 30px rgba(0, 0, 255, 0.8); /* Shadow lebih terang */
+    transform: rotate(360deg); /* Efek berputar */
+}
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+<nav class="navbar">
+    <div class="logo">
+        <img src="lg.svg" alt="Lotto Chain Logo" class="logo-img">
+        <span style="
+    font-size: 22px; 
+    font-weight: bold; 
+    background: linear-gradient(90deg, #03a9f4, #f441a5); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+">
+    Lotto Chain
+        </span>
+    </div>
+    <div class="hamburger" onclick="toggleMenu()">&#9776;</div>
+    <ul class="nav-links" id="navMenu">
+        <a href="#features">4D Pools</a>
+        <a href="#prizes">Prizes</a>
+        <a href="lottery">LottoBalls (LB)</a>
+        <a href="hk">Hong Kong (HK)</a>
+        <a href="syd">Sydney (SYD)</a>
+    </ul>
+</nav>
+    
+    <div class="container">
+    <h1>Search (HK) Winners</h1>
+    <h3>Lotto Chain Decentralizer Betting</h3>
+    <br>
+    <input type="number" id="searchInput" placeholder="Search Bet Numbers...">
+    <br>
+    <table>
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Bet ID</th>
+                <th>Bet Number</th>
+                <th>Bet Amount</th>
+                <th>Timestamp</th>
+                <th>Block</th>
+            </tr>
+        </thead>
+        <tbody id="betHistoryTable"></tbody>
+    </table>
+    </div>
+
+    <!-- Footer -->
+<footer>
+    <div class="social-icons">
+        <a href="https://twitter.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+        <a href="https://t.me/" target="_blank"><i class="fa-brands fa-telegram"></i></a>
+        <a href="" target="_blank"><i class="fa-brands fa-discord"></i></a>
+        <a href="" target="_blank"><i class="fa-brands fa-facebook"></i></a>
+        <a href="" target="_blank"><i class="fa-brands fa-youtube"></i></a>
+    </div>
+    <p>© 2025 Powered By Lotto Chain. All rights reserved. Play responsibly.</p>
+</footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const contractAddress = "0x410F02E143Ba921FEdda48830d545154F5E809ab";  // Ganti dengan alamat kontrak asli
+        const contractABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"}],"name":"BetLiked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":false,"internalType":"string","name":"number","type":"string"},{"indexed":false,"internalType":"uint256","name":"betAmount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"blockNumber","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"txHash","type":"bytes32"}],"name":"BetPlaced","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"drawId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"winningNumber","type":"uint256"}],"name":"BetResultSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"string","name":"comment","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"CommentAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"commentIndex","type":"uint256"}],"name":"CommentDeleted","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"betId","type":"bytes32"},{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"commentIndex","type":"uint256"},{"indexed":false,"internalType":"string","name":"newComment","type":"string"}],"name":"CommentUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ETHClaimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WinnerSet","type":"event"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"string","name":"_comment","type":"string"}],"name":"addComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"betComments","outputs":[{"internalType":"address","name":"commenter","type":"address"},{"internalType":"string","name":"text","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bool","name":"isDeleted","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"betHistory","outputs":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"},{"internalType":"address","name":"","type":"address"}],"name":"betLikes","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"betPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"betResults","outputs":[{"internalType":"uint256","name":"drawId","type":"uint256"},{"internalType":"uint256","name":"winningNumber","type":"uint256"},{"internalType":"bool","name":"isProcessed","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimETH","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"contractBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"uint256","name":"commentIndex","type":"uint256"}],"name":"deleteComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"},{"internalType":"uint256","name":"commentIndex","type":"uint256"},{"internalType":"string","name":"newComment","type":"string"}],"name":"editComment","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getAllBets","outputs":[{"components":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"internalType":"struct BetHistory.Bet[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"}],"name":"getComments","outputs":[{"components":[{"internalType":"address","name":"commenter","type":"address"},{"internalType":"string","name":"text","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bool","name":"isDeleted","type":"bool"}],"internalType":"struct BetHistory.Comment[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"_user","type":"address"}],"name":"getUserBets","outputs":[{"components":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"internalType":"struct BetHistory.Bet[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"betId","type":"bytes32"}],"name":"likeBet","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"maxBet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"minBet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_number","type":"string"},{"internalType":"uint256","name":"_times","type":"uint256"},{"internalType":"bool","name":"_isETH","type":"bool"}],"name":"placeBet","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_drawId","type":"uint256"},{"internalType":"uint256","name":"_winningNumber","type":"uint256"}],"name":"setBetResult","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_winner","type":"address"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"setWinner","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"userBets","outputs":[{"internalType":"address","name":"player","type":"address"},{"internalType":"string","name":"number","type":"string"},{"internalType":"uint256","name":"betAmount","type":"uint256"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"blockNumber","type":"uint256"},{"internalType":"bytes32","name":"txHash","type":"bytes32"},{"internalType":"bool","name":"isETH","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"winnings","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"withdrawETH","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}];
+        
+const provider = new Web3.providers.HttpProvider("https://sepolia.base.org"); 
+const web3 = new Web3(provider);
+const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+async function loadBetHistory() {
+    try {
+        const bets = await contract.methods.getAllBets().call();
+        const tableBody = document.getElementById("betHistoryTable");
+        const searchInput = document.getElementById("searchInput");
+
+        function renderTable(filter = "") {
+            tableBody.innerHTML = "";
+            const now = Math.floor(Date.now() / 1000); // Waktu sekarang dalam detik
+            const twoDaysAgo = now - (2 * 24 * 60 * 60); // 2 hari yang lalu dalam detik
+
+            bets
+                .filter(bet => bet.timestamp >= twoDaysAgo) // Hanya bet dalam 2 hari terakhir
+                .filter(bet => String(bet.number).includes(filter)) // Filter berdasarkan input pencarian
+                .reverse() // Urutkan agar yang terbaru di atas
+                .forEach(bet => {
+                    const row = `
+                        <tr>
+                            <td style="color: #ad5cff; font-weight: bold;">${bet.player}</td>
+                            <td style="color: #ffcc00; font-weight: bold;">${bet.betId}</td>
+                            <td style="color: #00FF66; font-weight: bold;">${bet.number}</td>
+                            <td style="color: #fe6666; font-weight: bold;">${bet.betAmount}</td>
+                            <td style="color: orange; font-weight: bold;">${new Date(bet.timestamp * 1000).toISOString()}</td>
+                            <td><a href="https://sepolia.basescan.org/block/${bet.blockNumber}" target="_blank" style="text-decoration: none; color: #1a88ff;">${bet.blockNumber}</a></td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+        }
+
+        searchInput.addEventListener("input", () => {
+            renderTable(searchInput.value.trim()); // Update tabel saat input berubah
+        });
+
+        renderTable(); // Muat semua data saat pertama kali halaman dibuka
+    } catch (error) {
+        console.error("Failed to load bet history:", error);
+    }
+}
+
+// Panggil fungsi saat halaman dimuat
+window.addEventListener("load", loadBetHistory);
+
+document.getElementById("searchInput").addEventListener("input", function (e) {
+    this.value = this.value.replace(/\D/g, ""); // Hapus karakter non-angka
+});
+        
+    </script>
+</body>
+</html>

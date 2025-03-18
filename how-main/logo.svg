@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 720 1180">
+  <defs>
+    <!-- Gradasi Kristal -->
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00A2FF; stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0044CC; stop-opacity:1"/>
+    </linearGradient>
+
+    <!-- Efek Cahaya -->
+    <radialGradient id="lightEffect" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFFFFF; stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#00A2FF; stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Gradasi Kubus 3D -->
+    <linearGradient id="cubeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0044CC; stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#001166; stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Grup utama untuk animasi bounce -->
+  <g id="mainShape" transform="translate(360, 410) scale(0.85)">
+    <!-- Kristal -->
+    <path fill="url(#blueGradient)" d="M0,-450 C-100,-200 -300,100 0,450 C300,100 100,-200 0,-450 Z">
+      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-30; 0,0" dur="1s" repeatCount="indefinite" keyTimes="0; 0.5; 1" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+    </path>
+
+    <!-- Efek refleksi -->
+    <path fill="url(#lightEffect)" opacity="0.6" d="M0,-400 C-80,-180 -250,100 0,400 C250,100 80,-180 0,-400 Z">
+      <animateTransform attributeName="transform" type="translate" values="0,0; 0,-30; 0,0" dur="1s" repeatCount="indefinite" keyTimes="0; 0.5; 1" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+    </path>
+  </g>
+
+  <!-- Bagian bawah kubus 3D -->
+  <polygon fill="url(#cubeGradient)" points="360,870 235,1030 360,1180 485,1030"/>
+  <polygon fill="#002288" points="360,870 485,1030 360,1180 235,1030"/>
+  <polygon fill="#0055FF" points="360,870 235,1030 485,1030"/>
+  <polygon fill="rgba(255,255,255,0.2)" points="360,870 235,1030 360,1180" opacity="0.7"/>
+  <polygon fill="rgba(0,0,0,0.2)" points="360,870 485,1030 360,1180" opacity="0.5"/>
+</svg>
