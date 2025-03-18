@@ -1058,7 +1058,7 @@ async function loadUserBets() {
 
         html += `<p>
             Wallet: <span style="color: #ad5cff;">${shortPlayer}</span><br>
-            BetID: <span style="color: #e69600; font-size: 10px;">${bet.betId}</span><br>
+            BetID: <span style="color: #b37500; font-size: 10px;">${bet.betId}</span><br>
             BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
             BetAmount: <span style="color: #00FF66;">${bet.betAmount}</span><br>
             Tx: <span style="color: #fe6666;">${shortTxHash}</span><br>
@@ -1104,7 +1104,7 @@ async function loadBetHistory() {
         let shortTxHash = bet.txHash.slice(0, 10) + "..." + bet.txHash.slice(-10);
 
         html += `<p>Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
-            BetID: <span style="color: #e69600; font-size: 10px;">${bet.betId}</span><br>
+            BetID: <span style="color: #b37500; font-size: 10px;">${bet.betId}</span><br>
             BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
             BetAmount: <span style="color: #00FF66;">${bet.betAmount}</span><br>
             Tx: <span style="color: #fe6666;">${shortTxHash}</span><br>
