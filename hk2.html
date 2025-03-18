@@ -435,17 +435,17 @@ footer {
             </div>
          </div>
 
-        // Comment Modal
-        <div id="commentModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeComments()">&times;</span>
-        <h3>Komentar</h3>
-        <div id="commentsList"></div>
-        <button id="loadMoreComments" onclick="loadMoreComments()">Tampilkan lebih banyak</button>
-        <textarea id="commentInput" placeholder="Tulis komentar..."></textarea>
-        <button onclick="addComment()">Kirim</button>
-    </div>
-        </div>
+        <!-- Button untuk membuka komentar -->
+<button onclick="openCommentModal('BET_ID')">(0)Komentar</button>
+
+<!-- Modal Pop-up untuk Komentar -->
+<div id="comment-modal" style="display: none; position: fixed; top: 20%; left: 50%; transform: translate(-50%, -20%); width: 400px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+    <h3>Comments</h3>
+    <div id="comment-section-BET_ID"></div>
+    <textarea id="comment-input-BET_ID" placeholder="Write a comment..."></textarea>
+    <button onclick="addComment('BET_ID')">Send</button>
+    <button onclick="closeCommentModal()">Close</button>
+</div>
 
         <!-- Footer -->
 <footer>
@@ -746,7 +746,7 @@ async function loadBetHistory() {
     Block: <a href="https://basescan.io/block/${bet.blockNumber}" target="_blank" style="color: #1a88ff;">${bet.blockNumber}</a><br>
     Time: <span style="color: orange;">${new Date(bet.timestamp * 1000).toISOString()} UTC</span><br>
 </p>
-<button class="comment-btn" data-betid="${bet.betId}" onclick="openComments('${bet.betId}')">(0)komentar</button>
+<button onclick="openCommentModal('${bet.betId}')">(0)Komentar</button>
 <hr style="background-color: #333333; height: 1px; border: none;">`;
     }
     document.getElementById("betHistory").innerHTML = html;
@@ -766,107 +766,91 @@ function nextBetHistory() {
 }
 
 // Comment Script
-let comments = {}; // Menyimpan komentar berdasarkan betId
-let currentBetId = null;
-let commentsPerLoad = 10;
+async function getComments(betId, startIndex = 0, count = 10) {
+    try {
+        const comments = await contract.methods.getComments(betId).call();
+        const commentSection = document.getElementById(`comment-section-${betId}`);
 
-// Fungsi untuk membuka modal komentar
-function openComments(betId) {
-    currentBetId = betId;
-    if (!comments[betId]) {
-        comments[betId] = [];
-    }
+        // Bersihkan tampilan sebelum menampilkan komentar baru
+        commentSection.innerHTML = "";
 
-    document.getElementById('commentModal').style.display = 'block';
-    loadComments();
-}
+        // Lazy load komentar (ambil sebagian saja)
+        const displayedComments = comments.slice(startIndex, startIndex + count);
 
-// Fungsi untuk menutup modal komentar
-function closeComments() {
-    document.getElementById('commentModal').style.display = 'none';
-}
+        displayedComments.forEach((comment, index) => {
+            if (!comment.isDeleted) {
+                const commentElement = document.createElement("div");
+                commentElement.innerHTML = `
+                    <p><strong>${comment.commenter}</strong>: ${comment.text}</p>
+                    <small>${new Date(comment.timestamp * 1000).toISOString()}</small>
+                    <button onclick="editComment('${betId}', ${index}, '${comment.text}')">Edit</button>
+                    <button onclick="deleteComment('${betId}', ${index})">Delete</button>
+                    <hr>
+                `;
+                commentSection.appendChild(commentElement);
+            }
+        });
 
-// Fungsi untuk memuat komentar pertama kali (5 komentar pertama)
-function loadComments() {
-    let commentsList = document.getElementById('commentsList');
-    commentsList.innerHTML = ''; 
-    let displayComments = comments[currentBetId].slice(0, 5);
-
-    displayComments.forEach((comment, index) => {
-        commentsList.innerHTML += generateCommentHTML(comment, index);
-    });
-
-    document.getElementById('loadMoreComments').style.display = (comments[currentBetId].length > 5) ? 'block' : 'none';
-}
-
-// Fungsi untuk memuat lebih banyak komentar (10 tambahan)
-function loadMoreComments() {
-    let commentsList = document.getElementById('commentsList');
-    let currentCount = commentsList.childNodes.length;
-    let moreComments = comments[currentBetId].slice(currentCount, currentCount + commentsPerLoad);
-
-    moreComments.forEach((comment, index) => {
-        commentsList.innerHTML += generateCommentHTML(comment, currentCount + index);
-    });
-
-    if (commentsList.childNodes.length >= comments[currentBetId].length) {
-        document.getElementById('loadMoreComments').style.display = 'none';
+        // Tombol untuk memuat lebih banyak komentar
+        if (comments.length > startIndex + count) {
+            const loadMoreBtn = document.createElement("button");
+            loadMoreBtn.innerText = "Load More";
+            loadMoreBtn.onclick = () => getComments(betId, startIndex + count, count);
+            commentSection.appendChild(loadMoreBtn);
+        }
+    } catch (error) {
+        console.error("Failed to fetch comments:", error);
     }
 }
 
-// Fungsi untuk menambah komentar
-function addComment() {
-    let commentText = document.getElementById('commentInput').value;
-    if (commentText.trim() === '') return alert("Komentar tidak boleh kosong!");
+async function addComment(betId) {
+    const commentText = document.getElementById(`comment-input-${betId}`).value;
+    if (!commentText) {
+        alert("Comment cannot be empty!");
+        return;
+    }
 
-    let newComment = {
-        commenter: "You", // Simulasi user
-        text: commentText,
-        timestamp: new Date().toISOString(),
-        isDeleted: false
-    };
-
-    comments[currentBetId].unshift(newComment); // Menambah di awal
-    document.getElementById('commentInput').value = '';
-    loadComments();
-    updateCommentCount();
-}
-
-// Fungsi untuk mengedit komentar
-function editComment(index) {
-    let newCommentText = prompt("Edit komentar:", comments[currentBetId][index].text);
-    if (newCommentText !== null && newCommentText.trim() !== '') {
-        comments[currentBetId][index].text = newCommentText;
-        loadComments();
+    try {
+        await contract.methods.addComment(betId, commentText).send({ from: userAccount });
+        alert("Comment added successfully!");
+        getComments(betId); // Perbarui daftar komentar setelah menambah
+    } catch (error) {
+        console.error("Failed to add comment:", error);
     }
 }
 
-// Fungsi untuk menghapus komentar
-function deleteComment(index) {
-    if (confirm("Hapus komentar ini?")) {
-        comments[currentBetId][index].isDeleted = true;
-        loadComments();
-        updateCommentCount();
+async function editComment(betId, commentIndex, oldText) {
+    const newComment = prompt("Edit your comment:", oldText);
+    if (!newComment) return;
+
+    try {
+        await contract.methods.editComment(betId, commentIndex, newComment).send({ from: userAccount });
+        alert("Comment updated!");
+        getComments(betId); // Perbarui daftar komentar setelah edit
+    } catch (error) {
+        console.error("Failed to edit comment:", error);
     }
 }
 
-// Fungsi untuk menghasilkan HTML komentar
-function generateCommentHTML(comment, index) {
-    if (comment.isDeleted) return `<p style="color: red;">[Komentar dihapus]</p>`;
+async function deleteComment(betId, commentIndex) {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
 
-    return `
-        <p>
-            <strong>${comment.commenter}</strong>: ${comment.text} 
-            <button onclick="editComment(${index})">Edit</button> 
-            <button onclick="deleteComment(${index})">Hapus</button>
-        </p>
-    `;
+    try {
+        await contract.methods.deleteComment(betId, commentIndex).send({ from: userAccount });
+        alert("Comment deleted!");
+        getComments(betId); // Perbarui daftar komentar setelah hapus
+    } catch (error) {
+        console.error("Failed to delete comment:", error);
+    }
 }
 
-// Fungsi untuk memperbarui jumlah komentar di tombol
-function updateCommentCount() {
-    let commentBtn = document.querySelector(`button[data-betid="${currentBetId}"]`);
-    commentBtn.innerText = `(${comments[currentBetId].length})komentar`;
+function openCommentModal(betId) {
+    document.getElementById("comment-modal").style.display = "block";
+    getComments(betId);
+}
+
+function closeCommentModal() {
+    document.getElementById("comment-modal").style.display = "none";
 }
         
 // Fungsi untuk membuka modal berdasarkan ID
