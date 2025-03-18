@@ -732,7 +732,13 @@ async function loadBetHistory() {
     const start = betHistoryPage * pageSize;
     const end = Math.min(start + pageSize, reversedBets.length);
 
-    let html = "<p>
+    let html = "";
+    for (let i = start; i < end; i++) {
+        let bet = reversedBets[i];
+        let shortPlayer = bet.player.slice(0, 10) + "..." + bet.player.slice(-10);
+        let shortTxHash = bet.txHash.slice(0, 10) + "..." + bet.txHash.slice(-10);
+
+       html += `<p>
     Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
     BetID: <span style="color: #b37500; font-size: 8px;">${bet.betId}</span><br>
     BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
@@ -748,13 +754,8 @@ async function loadBetHistory() {
     </button> 
     <span id="like-count-${bet.betId}" style="color: #ffcc00; font-weight: bold;">0</span> likes
 </p>
-<hr style="background-color: #333333; height: 1px; border: none;">";
-    for (let i = start; i < end; i++) {
-        let bet = reversedBets[i];
-        let shortPlayer = bet.player.slice(0, 10) + "..." + bet.player.slice(-10);
-        let shortTxHash = bet.txHash.slice(0, 10) + "..." + bet.txHash.slice(-10);
-
-        html += ``;
+<hr style="background-color: #333333; height: 1px; border: none;">`; 
+        
     }
     document.getElementById("betHistory").innerHTML = html;
 }
