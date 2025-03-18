@@ -623,33 +623,13 @@ h3 {
         <p id="walletBalance" style="display:none; color: #00ca09;">Balance: 0 ETH</p>
         <hr style="background-color: #333333; height: 1px; border: none;">
         <h2>Place Bet</h2>
-<h6 class="blinking-text">Always use slippage to save transaction gas fees</h6><br>
-
-<input type="number" id="betNumber" placeholder="4D 3D or 2D" oninput="validateBetNumber()"><br>
-<input type="number" id="betTimes" placeholder="x1 / x99" min="1" max="99" oninput="validateBetTimes(); updateBetPrice()"><br>
-
-<!-- Input Slippage -->
-<label for="slippage">Slippage (%)</label>
-<input type="number" id="slippage" placeholder="0.1 - 5" min="0.1" max="5" step="0.1" value="1"><br>
-
-<!-- Pilihan Gas Fee -->
-<label for="gasFee">Transaction Speed:</label>
-<select id="gasFee" onchange="updateGasFee()">
-    <option value="slow">Slow (Cheap)</option>
-    <option value="market" selected>Market (Balanced)</option>
-    <option value="fast">Fast (Expensive)</option>
-</select><br>
-
-<!-- Estimasi Gas Fee -->
-<p id="ethPrice">ETH Price: Loading...</p>
-<p id="gasFeeEstimate">Estimated Fee: 0.0002 ETH (~$0.50)</p>
-
-<p id="betWarning" style="color: red;"></p>
-<p id="betPrice" style="color: #00FF66; font-weight: bold;">Cost: 0.000000 ETH</p>
-
-<button onclick="placeBet()">Place Bet</button><br>
-<p id="betStatus"></p>
-       
+        <h6 class="blinking-text">Always use slippage to save transaction gas fees</h6><br>
+        <input type="number" id="betNumber" placeholder="4D 3D or 2D" oninput="validateBetNumber()"><br>
+        <input type="number" id="betTimes" placeholder="x1 / x99" min="1" max="99" oninput="validateBetTimes(); updateBetPrice()">
+        <p id="betWarning" style="color: red;"></p>
+        <p id="betPrice" style="color: #00FF66; font-weight: bold;">Cost: 0.000000 ETH</p>
+        <button onclick="placeBet()">Place Bet</button>
+        <p id="betStatus"></p>
        <br>
        <h2>Public Bet History</h2>
        <button onclick="window.open('search', '_blank')"><img src="icon.svg" alt="Lotto">Search Winners</button><br><br>
@@ -1258,64 +1238,5 @@ window.onload = () => {
 };
     </script>
        
-    <script>
-let ethPrice = 0;
-
-// Fungsi untuk mengambil harga ETH real-time dari CoinGecko
-async function fetchEthPrice() {
-    try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-        const data = await response.json();
-        ethPrice = data.ethereum.usd;
-        document.getElementById("ethPrice").innerText = `ETH Price: $${ethPrice}`;
-        updateGasFee();
-    } catch (error) {
-        console.error("Failed to fetch ETH price:", error);
-        document.getElementById("ethPrice").innerText = "ETH Price: Error";
-    }
-}
-
-// Fungsi untuk memperbarui estimasi biaya gas berdasarkan harga ETH
-function updateGasFee() {
-    let gasOption = document.getElementById("gasFee").value;
-    let gasCost = 0.0002; // Default Market
-    if (gasOption === "slow") gasCost = 0.00015;
-    if (gasOption === "fast") gasCost = 0.00035;
-
-    let gasInUsd = (gasCost * ethPrice).toFixed(2);
-    document.getElementById("gasFeeEstimate").innerText = `Estimated Fee: ${gasCost} ETH (~$${gasInUsd})`;
-}
-
-// Fungsi untuk menghitung harga taruhan dengan slippage dan biaya gas
-function placeBet() {
-    let betNumber = document.getElementById("betNumber").value;
-    let betTimes = document.getElementById("betTimes").value;
-    let slippage = document.getElementById("slippage").value;
-    let gasOption = document.getElementById("gasFee").value;
-
-    if (!betNumber || !betTimes) {
-        document.getElementById("betWarning").innerText = "Please fill in all fields.";
-        return;
-    }
-
-    document.getElementById("betWarning").innerText = "";
-
-    let price = 0.01; // Harga dasar taruhan
-    let slippageAmount = price * (slippage / 100);
-    let finalPrice = price + slippageAmount;
-
-    let gasCost = 0.0002;
-    if (gasOption === "slow") gasCost = 0.00015;
-    if (gasOption === "fast") gasCost = 0.00035;
-
-    let gasInUsd = (gasCost * ethPrice).toFixed(2);
-
-    document.getElementById("betPrice").innerText = `Cost: ${finalPrice.toFixed(6)} ETH`;
-    document.getElementById("betStatus").innerText = `Bet placed with ${slippage}% slippage and ${gasCost} ETH fee (~$${gasInUsd})!`;
-}
-
-// Ambil harga ETH saat halaman dimuat
-fetchEthPrice();
-    </script>
 </body>
 </html>
