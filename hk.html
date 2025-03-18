@@ -656,19 +656,19 @@ h3 {
                     <th>Example (0.000175 ETH)</th>
                 </tr>
                 <tr>
-                    <td>4D</td>
-                    <td>50,000%</td>
-                    <td>0.0875 ETH</td>
+                    <td style="color: orange; font-weight: bold;">4D</td>
+                    <td style="color: green; font-weight: bold;">50,000%</td>
+                    <td style="color: blue; font-weight: bold;">0.0875 ETH</td>
                 </tr>
                 <tr>
-                    <td>3D</td>
-                    <td>5,000%</td>
-                    <td>0.00875 ETH</td>
+                    <td style="color: orange; font-weight: bold;">3D</td>
+                    <td style="color: green; font-weight: bold;">5,000%</td>
+                    <td style="color: blue; font-weight: bold;">0.00875 ETH</td>
                 </tr>
                 <tr>
-                    <td>2D</td>
-                    <td>500%</td>
-                    <td>0.000875 ETH</td>
+                    <td style="color: orange; font-weight: bold;">2D</td>
+                    <td style="color: green; font-weight: bold;">500%</td>
+                    <td style="color: blue; font-weight: bold;">0.000875 ETH</td>
                 </tr>
             </table>
         </div>
@@ -1008,10 +1008,9 @@ async function placeBet() {
     }
     
     try {
-        // Menampilkan status transaksi sedang berlangsung
-        document.getElementById("betStatus").innerHTML = `
+        // Menampilkan status transaksi      document.getElementById("betStatus").innerHTML = `
             <img src="loading.png" width="20" height="20" style="vertical-align: middle;">
-            <span style="color: #aaffaa;">Transaksi sedang berlangsung...</span>
+            <span style="color: #aaffaa; font-size: 12px;">Transaction in progress...</span>
         `;
 
         await contract.methods.placeBet(number, times, true).send({
@@ -1022,8 +1021,14 @@ async function placeBet() {
         // Jika sukses
         document.getElementById("betStatus").innerHTML = `
             <img src="success.png" width="20" height="20" style="vertical-align: middle;">
-            <span style="color: #00cc00;">Bet placed successfully!</span>
+            <span style="color: #00cc00; font-size: 12px;">Bet placed successfully!</span>
         `;
+
+        // Menghilangkan status setelah 2 detik
+        setTimeout(() => {
+            document.getElementById("betStatus").innerHTML = "";
+        }, 2000);
+
         loadUserBets();
     } catch (error) {
         console.error(error);
@@ -1031,8 +1036,13 @@ async function placeBet() {
         // Jika gagal
         document.getElementById("betStatus").innerHTML = `
             <img src="failed.png" width="20" height="20" style="vertical-align: middle;">
-            <span style="color: #ff3333;">Transaction failed!</span>
+            <span style="color: #ff3333; font-size: 12px;">Transaction failed!</span>
         `;
+
+        // Menghilangkan status setelah 2 detik
+        setTimeout(() => {
+            document.getElementById("betStatus").innerHTML = "";
+        }, 2000);
     }
 }
 
