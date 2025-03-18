@@ -1157,13 +1157,16 @@ async function loadBetHistory() {
             Tx: <span style="color: #fe6666;">${shortTxHash}</span><br>
             Block: <a href="https://basescan.io/block/${bet.blockNumber}" target="_blank" style="color: #1a88ff;">${bet.blockNumber}</a><br>
             Time: <span style="color: orange;">${new Date(bet.timestamp * 1000).toISOString()} UTC</span><br>
-        </p>
-        <button onclick="likeBet('${bet.betId}')" style="background: none; border: none; cursor: pointer;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-        </button>
-        <hr style="background-color: #333333; height: 1px; border: none;">`;
+            <button onclick="likeBet('${bet.betId}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </button> 
+            <span id="like-count-${bet.betId}" style="color: #ffcc00; font-weight: bold;">0</span> likes
+        </p><hr style="background-color: #333333; height: 1px; border: none;">`;
+
+// Ambil jumlah like saat bet ditampilkan
+getLikeCount(bet.betId);
     }
     document.getElementById("betHistory").innerHTML = html;
 }
@@ -1186,6 +1189,9 @@ async function likeBet(betId) {
     try {
         await contract.methods.likeBet(betId).send({ from: userAccount });
         alert("Liked successfully!");
+
+        // Perbarui jumlah like setelah like sukses
+        getLikeCount(betId);
     } catch (error) {
         console.error(error);
         alert("Failed to like the bet.");
