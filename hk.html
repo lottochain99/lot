@@ -1150,7 +1150,7 @@ async function loadBetHistory() {
         let shortPlayer = bet.player.slice(0, 10) + "..." + bet.player.slice(-10);
         let shortTxHash = bet.txHash.slice(0, 10) + "..." + bet.txHash.slice(-10);
 
-        html += `<p>Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
+       html += `<p>Player: <span style="color: #ad5cff;">${shortPlayer}</span><br>
             BetID: <span style="color: #b37500; font-size: 8px;">${bet.betId}</span><br>
             BetNumber: <span style="color: #00FF66;">${bet.number}</span><br>
             BetAmount: <span style="color: #00FF66;">${bet.betAmount}</span><br>
@@ -1163,10 +1163,8 @@ async function loadBetHistory() {
                 </svg>
             </button> 
             <span id="like-count-${bet.betId}" style="color: #ffcc00; font-weight: bold;">0</span> likes
-        </p><hr style="background-color: #333333; height: 1px; border: none;">`;
-
-// Ambil jumlah like saat bet ditampilkan
-getLikeCount(bet.betId);
+        </p><hr style="background-color: #333333; height: 1px; border: none;">`; 
+        
     }
     document.getElementById("betHistory").innerHTML = html;
 }
@@ -1185,6 +1183,18 @@ function nextBetHistory() {
 }
 
 // Like Script
+async function getLikeCount(betId) {
+    try {
+        const likeCount = await contract.methods.getLikeCount(betId).call();
+        const likeElement = document.getElementById(`like-count-${betId}`);
+        if (likeElement) {
+            likeElement.innerText = likeCount;
+        }
+    } catch (error) {
+        console.error("Failed to fetch like count:", error);
+    }
+}
+
 async function likeBet(betId) {
     try {
         await contract.methods.likeBet(betId).send({ from: userAccount });
