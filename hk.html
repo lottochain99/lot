@@ -576,7 +576,7 @@ h3 {
     font-size: 10px;
     font-weight: bold;
     text-align: center;
-    animation: blink 4s infinite alternate;
+    animation: blink 3s infinite alternate;
   }
 
   @keyframes blink {
@@ -628,9 +628,9 @@ h3 {
         <input type="number" id="betTimes" placeholder="x1 / x99" min="1" max="99" oninput="validateBetTimes(); updateBetPrice()">
         <p id="betWarning" style="color: red;"></p>
         <p id="betPrice" style="color: #00FF66; font-weight: bold;">Cost: 0.000000 ETH</p>
-        <button onclick="placeBet()">Place Bet</button>
+        <button onclick="placeBet()">Place Bet</button><br>
         <p id="betStatus"></p>
-
+       <br>
        <h2>Public Bet History</h2>
        <button onclick="window.open('search', '_blank')"><img src="icon.svg" alt="Lotto">Search Winners</button><br><br>
        <hr style="background-color: #333333; height: 1px; border: none;">
