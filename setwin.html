@@ -127,56 +127,90 @@ let contract;
 let ownerAddress;
 
 // Wallet Connection
-async function connectWallet() {
+async function checkWalletConnection() {
     if (window.ethereum) {
         try {
-            const accounts = await ethereum.request({ method: "eth_requestAccounts" });
-            userAccount = accounts[0];
-            document.getElementById("walletAddress").innerText = "Wallet: " + userAccount;
-
-            web3 = new Web3(window.ethereum);
-            contract = new web3.eth.Contract(contractABI, contractAddress);
-
-            // Check if the user is the owner
-            ownerAddress = await contract.methods.owner().call();
-            if (userAccount.toLowerCase() === ownerAddress.toLowerCase()) {
-                document.getElementById("ownerStatus").innerText = "✅ You Are the Owner!";
-                document.getElementById("ownerStatus").style.color = "green";
-            } else {
-                document.getElementById("ownerStatus").innerText = "🚫 You Are Not the Owner!";
-                document.getElementById("ownerStatus").style.color = "red";
+            const accounts = await ethereum.request({ method: "eth_accounts" });
+            if (accounts.length > 0) {
+                userAccount = accounts[0];
+                updateUIAfterConnect();
             }
-
-            // **Panggil getContractBalance setelah wallet terhubung**
-            getContractBalance();
-
         } catch (error) {
-            console.error("Wallet Connection Error:", error);
+            console.error("Error checking wallet connection:", error);
         }
-    } else {
-        alert("Metamask not found! Please install Metamask.");
     }
+}
+
+async function connectWallet() {
+    if (!window.ethereum) {
+        alert("Metamask not found! Please install Metamask.");
+        return;
+    }
+
+    try {
+        const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+        if (accounts.length > 0) {
+            userAccount = accounts[0];
+            updateUIAfterConnect();
+        }
+    } catch (error) {
+        console.error("Wallet Connection Error:", error);
+    }
+}
+
+async function updateUIAfterConnect() {
+    document.getElementById("walletAddress").innerText = "Wallet: " + userAccount;
+
+    web3 = new Web3(window.ethereum);
+    contract = new web3.eth.Contract(contractABI, contractAddress);
+
+    ownerAddress = await contract.methods.owner().call();
+    if (userAccount.toLowerCase() === ownerAddress.toLowerCase()) {
+        document.getElementById("ownerStatus").innerText = "✅ You Are the Owner!";
+        document.getElementById("ownerStatus").style.color = "green";
+    } else {
+        document.getElementById("ownerStatus").innerText = "🚫 You Are Not the Owner!";
+        document.getElementById("ownerStatus").style.color = "red";
+    }
+
+    const btn = document.querySelector("button");
+    btn.innerText = "❌ Disconnect Wallet";
+    btn.setAttribute("onclick", "disconnectWallet()");
+
+    getContractBalance();
 }
 
 async function getContractBalance() {
     if (!web3 || !contract) {
-        console.error("Web3 or contract is not initialized.");
+        console.warn("Web3 or contract is not initialized yet.");
         return;
     }
 
     try {
         const balanceWei = await web3.eth.getBalance(contractAddress);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
-
         document.getElementById("contractBalance").innerText = balanceEth + " ETH";
     } catch (error) {
         console.error("Error fetching contract balance:", error);
-        document.getElementById("contractBalance").innerText = "Error";
+        document.getElementById("contractBalance").innerText = "Failed to load balance.";
     }
 }
 
-window.onload = connectWallet;
+function disconnectWallet() {
+    userAccount = null;
+    document.getElementById("walletAddress").innerText = "Wallet: Not Connected";
+    document.getElementById("ownerStatus").innerText = "";
+    document.getElementById("contractBalance").innerText = "Loading...";
 
+    const btn = document.querySelector("button");
+    btn.innerText = "🔗 Connect Wallet";
+    btn.setAttribute("onclick", "connectWallet()");
+
+    alert("Wallet disconnected! Refresh the page to fully reset connection.");
+}
+
+window.onload = checkWalletConnection;
+        
 // Set Winner (Only The Owner)
 async function setWinner() {
     if (!userAccount) {
