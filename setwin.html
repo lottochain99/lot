@@ -146,6 +146,10 @@ async function connectWallet() {
                 document.getElementById("ownerStatus").innerText = "🚫 You Are Not the Owner!";
                 document.getElementById("ownerStatus").style.color = "red";
             }
+
+            // **Panggil getContractBalance setelah wallet terhubung**
+            getContractBalance();
+
         } catch (error) {
             console.error("Wallet Connection Error:", error);
         }
@@ -155,13 +159,13 @@ async function connectWallet() {
 }
 
 async function getContractBalance() {
-    if (!window.ethereum) {
-        alert("Metamask not found! Please install Metamask.");
+    if (!web3 || !contract) {
+        console.error("Web3 or contract is not initialized.");
         return;
     }
 
     try {
-        const balanceWei = await web3.eth.getBalance(contract.options.address);
+        const balanceWei = await web3.eth.getBalance(contractAddress);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
 
         document.getElementById("contractBalance").innerText = balanceEth + " ETH";
@@ -171,7 +175,7 @@ async function getContractBalance() {
     }
 }
 
-window.onload = getContractBalance;
+window.onload = connectWallet;
 
 // Set Winner (Only The Owner)
 async function setWinner() {
