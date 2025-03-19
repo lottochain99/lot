@@ -41,6 +41,7 @@ contract BetHistory {
     mapping(address => uint256) public winnings;
     mapping(bytes32 => address) public betWinners;
     mapping(bytes32 => Bet) public bets;
+    mapping(uint256 => address[]) public betLikers;
     mapping(address => uint256) public totalBetsByPlayer;
     mapping(uint256 => uint256) public totalPayoutPerDraw;
     mapping(bytes32 => uint256) public betToDrawId;
@@ -221,11 +222,50 @@ function lastWinner() public view returns (address) {
     return betHistory[betHistory.length - 1].player;
 }
 
-function likeBet(bytes32 betId) external { require(!betLikes[betId][msg.sender], "You already liked this bet");
+function likeBet(uint256 betId) public {
+        require(!bets[betId].likedBy[msg.sender], "You already liked this bet");
+        
+        bets[betId].likedBy[msg.sender] = true;
+        bets[betId].likeCount++;
+        betLikers[betId].push(msg.sender);
 
-betLikes[betId][msg.sender] = true;
-    emit BetLiked(betId, msg.sender);
+        emit BetLiked(betId, msg.sender, bets[betId].likeCount);
+    }
+
+    function dislikeBet(uint256 betId) public {
+        require(bets[betId].likedBy[msg.sender], "You haven't liked this bet");
+
+        bets[betId].likedBy[msg.sender] = false;
+        bets[betId].likeCount--;
+
+        // Hapus alamat dari daftar like
+        for (uint i = 0; i < betLikers[betId].length; i++) {
+            if (betLikers[betId][i] == msg.sender) {
+                betLikers[betId][i] = betLikers[betId][betLikers[betId].length - 1];
+                betLikers[betId].pop();
+                break;
+            }
+        }
+
+        emit BetDisliked(betId, msg.sender, bets[betId].likeCount);
+    }
+
+    function getAllLikes(uint256 betId) public view returns (address[] memory) {
+        return betLikers[betId];
+    }
+
+    function hasLiked(uint256 betId, address user) public view returns (bool) {
+        return bets[betId].likedBy[user];
+    }
 }
+
+    function likeBet(uint256 betId) public {
+        likeCounts[betId] += 1;
+    }
+
+    function getLikeCount(uint256 betId) public view returns (uint256) {
+        return likeCounts[betId];
+    }
 
 function addComment(bytes32 betId, string memory _comment) external {
     require(bytes(_comment).length > 0, "Comment cannot be empty");
