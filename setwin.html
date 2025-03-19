@@ -127,13 +127,13 @@ let contract;
 let ownerAddress;
 
 // Wallet Connection
+// Cek apakah wallet sudah terhubung sebelumnya tanpa menghubungkan otomatis
 async function checkWalletConnection() {
     if (window.ethereum) {
         try {
             const accounts = await ethereum.request({ method: "eth_accounts" });
             if (accounts.length > 0) {
-                userAccount = accounts[0];
-                updateUIAfterConnect();
+                document.getElementById("walletAddress").innerText = "Wallet: (Not Connected)"; // Tidak langsung terhubung
             }
         } catch (error) {
             console.error("Error checking wallet connection:", error);
@@ -141,6 +141,7 @@ async function checkWalletConnection() {
     }
 }
 
+// Fungsi untuk menghubungkan wallet secara manual
 async function connectWallet() {
     if (!window.ethereum) {
         alert("Metamask not found! Please install Metamask.");
@@ -158,6 +159,7 @@ async function connectWallet() {
     }
 }
 
+// Update UI setelah wallet terhubung
 async function updateUIAfterConnect() {
     document.getElementById("walletAddress").innerText = "Wallet: " + userAccount;
 
@@ -180,6 +182,7 @@ async function updateUIAfterConnect() {
     getContractBalance();
 }
 
+// Fungsi untuk mendapatkan saldo kontrak
 async function getContractBalance() {
     if (!web3 || !contract) {
         console.warn("Web3 or contract is not initialized yet.");
@@ -196,6 +199,7 @@ async function getContractBalance() {
     }
 }
 
+// Fungsi untuk "Disconnect" Wallet (Metamask tidak mendukung disconnect manual)
 function disconnectWallet() {
     userAccount = null;
     document.getElementById("walletAddress").innerText = "Wallet: Not Connected";
@@ -209,6 +213,7 @@ function disconnectWallet() {
     alert("Wallet disconnected! Refresh the page to fully reset connection.");
 }
 
+// Hanya cek apakah wallet ada, tanpa langsung menghubungkan
 window.onload = checkWalletConnection;
         
 // Set Winner (Only The Owner)
