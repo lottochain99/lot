@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 contract BetHistory {
     address public owner;
+    address[] public players;
     uint256 public minBet = 1;
     uint256 public maxBet = 99;
     uint256 public betPrice = 0.000256 ether;
@@ -17,6 +18,18 @@ contract BetHistory {
         bytes32 txHash;
         bool isETH;
 
+    }
+
+    struct PlayerStats {
+        uint256 totalBets;
+        uint256 totalAmountBet;
+        uint256 totalWins;
+        uint256 totalPayout;
+    }
+
+    struct LeaderboardReward {
+        address player;
+        uint256 totalBets;
     }
 
     struct WinnerData {
@@ -60,6 +73,10 @@ contract BetHistory {
     uint256 public totalWinners;
     mapping(bytes32 => uint256) public betLikeCount;
     mapping(uint256 => uint256) private likeCounts;
+    mapping(address => PlayerStats) public playerStats;
+    LeaderboardReward public topBettor;
+    uint256 public lastLeaderboardReset;
+    uint256 public rewardAmount;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -88,6 +105,7 @@ contract BetHistory {
     event WinnerSet(bytes32 indexed betId, address indexed winner, uint256 amount, uint256 number);
     event BetLiked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
     event BetLiked(bytes32 indexed betId, address indexed liker);
+    event RewardDistributed(address indexed winner, uint256 amount);
     event CommentAdded(bytes32 indexed betId, address indexed commenter, string comment, uint256 timestamp);
 
     modifier onlyOwner() {
@@ -105,6 +123,7 @@ contract BetHistory {
         require(msg.value == totalCost, "Incorrect ETH amount");
 
         bytes32 betId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.number));
+    
         Bet memory newBet = Bet({
             player: msg.sender,
             betId: betId,
@@ -118,10 +137,65 @@ contract BetHistory {
 
         betHistory.push(newBet);
         userBets[msg.sender].push(newBet);
+        totalBetsByPlayer[msg.sender] += _times;
+
+        if (totalBetsByPlayer[msg.sender] > topBettor.totalBets) {
+        topBettor = LeaderboardReward(msg.sender, totalBetsByPlayer[msg.sender]);
+
+    }
+
+        playerStats[msg.sender].totalBets += 1;
+        playerStats[msg.sender].totalAmountBet += totalCost;
 
         emit BetPlaced(msg.sender, betId, _number, _times, block.timestamp, block.number, blockhash(block.number - 1));
         emit TotalPlayersUpdated(betHistory.length);
         emit TotalPayoutUpdated(totalPayout());
+    }
+
+    function getPlayerStats(address _player) external view returns (uint256, uint256, uint256, uint256) {
+        PlayerStats memory stats = playerStats[_player];
+        return (stats.totalBets, stats.totalAmountBet, stats.totalWins, stats.totalPayout);
+    }
+
+    function getTopPlayers(uint256 topN) external view returns (address[] memory) {
+    require(topN > 0, "topN must be greater than 0");
+    require(topN <= players.length, "topN exceeds total players");
+
+    address[] memory sortedPlayers = new address[](players.length);
+
+    for (uint256 i = 0; i < players.length; i++) {
+        sortedPlayers[i] = players[i];
+    }
+
+    // Sorting bisa diterapkan di sini (misalnya berdasarkan jumlah taruhan)
+    // Namun sorting dalam Solidity mahal dalam gas, lebih baik sorting dilakukan off-chain
+
+    address[] memory topPlayers = new address[](topN);
+    for (uint256 j = 0; j < topN; j++) {
+        topPlayers[j] = sortedPlayers[j];
+    }
+
+    return topPlayers;
+}
+
+
+    function distributeReward() external onlyOwner {
+        require(block.timestamp >= lastLeaderboardReset + 7 days, "Leaderboard reset not yet due");
+
+        address winner = topBettor.player;
+        uint256 reward = rewardAmount;
+
+        require(winner != address(0), "No top bettor yet");
+        require(address(this).balance >= reward, "Not enough funds");
+
+    // **Kirim reward ke top bettor**
+        payable(winner).transfer(reward);
+
+        emit RewardDistributed(winner, reward);
+
+    // **Reset leaderboard**
+        lastLeaderboardReset = block.timestamp;
+        topBettor = LeaderboardReward(address(0), 0);
     }
 
     function setWinner(address _winner, uint256 _amount, uint256 _betId, uint256 _number) external onlyOwner {
