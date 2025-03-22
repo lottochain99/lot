@@ -178,22 +178,21 @@ contract BetHistory {
     return topPlayers;
 }
 
-
     function distributeReward() external onlyOwner {
         require(block.timestamp >= lastLeaderboardReset + 7 days, "Leaderboard reset not yet due");
 
         address winner = topBettor.player;
-        uint256 reward = rewardAmount;
+        uint256 reward = address(this).balance * 1 / 1000; // 0.1% dari saldo kontrak
 
         require(winner != address(0), "No top bettor yet");
         require(address(this).balance >= reward, "Not enough funds");
 
-    // **Kirim reward ke top bettor**
+    // Kirim reward ke top bettor
         payable(winner).transfer(reward);
 
         emit RewardDistributed(winner, reward);
 
-    // **Reset leaderboard**
+    // Reset leaderboard
         lastLeaderboardReset = block.timestamp;
         topBettor = LeaderboardReward(address(0), 0);
     }
