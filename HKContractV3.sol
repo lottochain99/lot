@@ -1,5 +1,5 @@
 /**
- *Submitted for verification at sepolia.basescan.org on 2025-03-12
+ *Submitted for verification at sepolia.basescan.org on 2025-03-18
 */
 
 // SPDX-License-Identifier: MIT
@@ -9,11 +9,12 @@ contract BetHistory {
     address public owner;
     uint256 public minBet = 1;
     uint256 public maxBet = 99;
-    uint256 public betPrice = 0.000175 ether;
+    uint256 public betPrice = 0.000256 ether;
 
     struct Bet {
         address player;
-        uint256 number;
+        bytes32 betId;
+        string number;
         uint256 betAmount;
         uint256 timestamp;
         uint256 blockNumber;
@@ -38,16 +39,17 @@ contract BetHistory {
     mapping(address => Bet[]) public userBets;
     mapping(uint256 => BetResult) public betResults;
     mapping(bytes32 => mapping(address => bool)) public betLikes;
-    mapping(uint256 => uint256) public likeCounts;
     mapping(bytes32 => Comment[]) public betComments;
     mapping(address => uint256) public winnings;
-    mapping(uint256 => Bet) public bets;
-    mapping(uint256 => address[]) public betLikers;
+    mapping(bytes32 => address) public betWinners;
+    mapping(bytes32 => Bet) public bets;
+    mapping(address => uint256) public totalBetsByPlayer;
+    mapping(uint256 => uint256) public totalPayoutPerDraw;
 
     event BetPlaced(
         address indexed player,
         bytes32 betId,
-        uint256 number,
+        string number,
         uint256 betAmount,
         uint256 timestamp,
         uint256 blockNumber,
@@ -55,14 +57,15 @@ contract BetHistory {
     );
 
     event BetResultSet(uint256 drawId, uint256 winningNumber);
-    event BetLiked(bytes32 betId, address indexed user);
+    event BetLiked(bytes32 indexed betId, address indexed liker);
     event CommentAdded(bytes32 betId, address indexed user, string comment, uint256 timestamp);
     event CommentUpdated(bytes32 betId, address indexed user, uint256 commentIndex, string newComment);
     event CommentDeleted(bytes32 betId, address indexed user, uint256 commentIndex);
-    event WinnerSet(address indexed winner, uint256 amount);
+    event WinnerSet(bytes32 betId, address indexed winner, uint256 amount);
     event ETHClaimed(address indexed winner, uint256 amount);
-    mapping(uint256 => Bet) public bets;
-    mapping(uint256 => address[]) public betLikers;
+    event TotalPlayersUpdated(uint256 totalPlayers);
+    event TotalPayoutUpdated(uint256 totalPayout);
+    event LastWinnerUpdated(address indexed winner);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -73,31 +76,38 @@ contract BetHistory {
         owner = msg.sender;
     }
 
-    function placeBet(uint256 _number, uint256 _times, bool _isETH) external payable {
-        require(_number >= 0 && _number <= 9999, "Invalid number (0 - 9999)");
-        require(_times >= minBet && _times <= maxBet, "Bet count out of range");
-
+    function placeBet(string memory _number, uint256 _times, bool _isETH) external payable {
+        require(bytes(_number).length >= 1 && bytes(_number).length <= 4, "Invalid number length");
         uint256 totalCost = _times * betPrice;
         require(msg.value == totalCost, "Incorrect ETH amount");
 
         bytes32 betId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.number));
-        uint256 blockNumber = block.number;
-        bytes32 txHash = blockhash(block.number - 1);
-
         Bet memory newBet = Bet({
             player: msg.sender,
+            betId: betId,
             number: _number,
             betAmount: _times,
             timestamp: block.timestamp,
-            blockNumber: blockNumber,
-            txHash: txHash,
+            blockNumber: block.number,
+            txHash: blockhash(block.number - 1),
             isETH: _isETH
         });
 
         betHistory.push(newBet);
         userBets[msg.sender].push(newBet);
 
-        emit BetPlaced(msg.sender, betId, _number, _times, block.timestamp, blockNumber, txHash);
+        emit BetPlaced(msg.sender, betId, _number, _times, block.timestamp, block.number, blockhash(block.number - 1));
+        emit TotalPlayersUpdated(betHistory.length);
+        emit TotalPayoutUpdated(totalPayout());
+    }
+
+    function setWinner(address _winner, uint256 _amount) external onlyOwner {
+        require(_amount > 0, "Invalid amount");
+        require(address(this).balance >= _amount, "Insufficient contract balance");
+
+        winnings[_winner] += _amount;
+        emit WinnerSet(bytes32(0), _winner, _amount);
+        emit LastWinnerUpdated(_winner);
     }
 
     function setBetResult(uint256 _drawId, uint256 _winningNumber) external onlyOwner {
@@ -108,14 +118,6 @@ contract BetHistory {
         });
 
         emit BetResultSet(_drawId, _winningNumber);
-    }
-
-    function setWinner(address _winner, uint256 _amount) external onlyOwner {
-        require(_amount > 0, "Invalid amount");
-        require(address(this).balance >= _amount, "Insufficient contract balance");
-
-        winnings[_winner] += _amount;
-        emit WinnerSet(_winner, _amount);
     }
 
     function claimETH() external {
@@ -129,49 +131,11 @@ contract BetHistory {
         emit ETHClaimed(msg.sender, amount);
     }
 
-    function likeBet(uint256 betId) public {
-        require(!bets[betId].likedBy[msg.sender], "You already liked this bet");
-        
-        bets[betId].likedBy[msg.sender] = true;
-        bets[betId].likeCount++;
-        betLikers[betId].push(msg.sender);
+    function likeBet(bytes32 betId) external {
+        require(!betLikes[betId][msg.sender], "You already liked this bet");
 
-        emit BetLiked(betId, msg.sender, bets[betId].likeCount);
-    }
-
-    function dislikeBet(uint256 betId) public {
-        require(bets[betId].likedBy[msg.sender], "You haven't liked this bet");
-
-        bets[betId].likedBy[msg.sender] = false;
-        bets[betId].likeCount--;
-
-        // Hapus alamat dari daftar like
-        for (uint i = 0; i < betLikers[betId].length; i++) {
-            if (betLikers[betId][i] == msg.sender) {
-                betLikers[betId][i] = betLikers[betId][betLikers[betId].length - 1];
-                betLikers[betId].pop();
-                break;
-            }
-        }
-
-        emit BetDisliked(betId, msg.sender, bets[betId].likeCount);
-    }
-
-    function getAllLikes(uint256 betId) public view returns (address[] memory) {
-        return betLikers[betId];
-    }
-
-    function hasLiked(uint256 betId, address user) public view returns (bool) {
-        return bets[betId].likedBy[user];
-    }
-}
-
-    function likeBet(uint256 betId) public {
-        likeCounts[betId] += 1;
-    }
-
-    function getLikeCount(uint256 betId) public view returns (uint256) {
-        return likeCounts[betId];
+        betLikes[betId][msg.sender] = true;
+        emit BetLiked(betId, msg.sender);
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
@@ -220,6 +184,25 @@ contract BetHistory {
 
     function contractBalance() external view returns (uint256) {
         return address(this).balance;
+    }
+
+    function totalPlayers() public view returns (uint256) {
+        return betHistory.length;
+    }
+
+    function totalPayout() public view returns (uint256) {
+        uint256 total;
+        for (uint256 i = 0; i < betHistory.length; i++) {
+            total += betHistory[i].betAmount;
+        }
+        return total * betPrice;
+    }
+
+    function lastWinner() public view returns (address) {
+        if (betHistory.length == 0) {
+            return address(0);
+        }
+        return betHistory[betHistory.length - 1].player;
     }
 
     function withdrawETH(uint256 _amount) external onlyOwner {
