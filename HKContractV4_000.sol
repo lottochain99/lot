@@ -169,28 +169,24 @@ contract BetHistory {
         emit ETHClaimed(msg.sender, amount);
     }
 
-    // Fungsi untuk memberikan like pada bet
     function likeBet(bytes32 betId) external {
         require(!betLikes[betId][msg.sender], "You already liked this bet");
 
         betLikes[betId][msg.sender] = true;
-        betLikeCount[betId]++; // ✅ Perbaiki error ini
+        betLikeCount[betId]++;
         betLikers[betId].push(msg.sender);
 
         emit BetLiked(betId, msg.sender);
     }
 
-    // Event untuk unlike
     event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
 
-    // Fungsi untuk unlike
     function unlikeBet(bytes32 betId) external {
         require(betLikes[betId][msg.sender], "You haven't liked this bet yet");
 
         betLikes[betId][msg.sender] = false;
-        betLikeCount[betId]--; // Kurangi jumlah like
+        betLikeCount[betId]--;
 
-    // Hapus dari daftar likers
     address[] storage likers = betLikers[betId];
     for (uint256 i = 0; i < likers.length; i++) {
         if (likers[i] == msg.sender) {
@@ -203,23 +199,18 @@ contract BetHistory {
     emit BetUnliked(betId, msg.sender, betLikeCount[betId]);
     }
 
-
-    // Fungsi untuk mendapatkan jumlah like suatu bet
     function getBetLikeCount(bytes32 betId) external view returns (uint256) {
         return betLikeCount[betId];
     }
 
-    // Fungsi untuk mendapatkan daftar siapa saja yang sudah like
     function getBetLikers(bytes32 betId) external view returns (address[] memory) {
         return betLikers[betId];
     }
 
-    // Mengambil daftar semua pengguna yang telah menyukai bet tertentu
     function getAllLikes(uint256 betId) public view returns (address[] memory) {
-        return betLikers[bytes32(betId)]; // ✅ Konversi uint256 ke bytes32
+        return betLikers[bytes32(betId)];
     }
 
-    // Mengambil jumlah like dari sebuah bet
     function getLikeCount(uint256 betId) public view returns (uint256) {
         return likeCounts[betId];
     }
