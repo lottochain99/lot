@@ -18,6 +18,14 @@ contract BetHistory {
         bool isETH;
     }
 
+    struct WinnerData {
+        address winner;
+        uint256 amount;
+        uint256 number;
+        uint256 timestamp;
+        uint256 prizesETH;
+    }
+
     struct Comment {
         address commenter;
         string text;
@@ -45,6 +53,9 @@ contract BetHistory {
     mapping(address => uint256) public totalBetsByPlayer;
     mapping(uint256 => uint256) public totalPayoutPerDraw;
     mapping(bytes32 => uint256) public betToDrawId;
+    mapping(uint256 => WinnerData) public winnerHistory; 
+    mapping(address => uint256) public winnings;
+    uint256 public totalWinners;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -73,6 +84,8 @@ contract BetHistory {
     event TotalPlayersUpdated(uint256 totalPlayers);
     event TotalPayoutUpdated(uint256 totalPayout);
     event LastWinnerUpdated(address indexed winner);
+    event WinnerSet(bytes32 indexed betId, address indexed winner, uint256 amount, uint256 number);
+    event LastWinnerUpdated(address winner);
 
     modifier onlyOwner() {
     require(msg.sender == owner, "Only owner can call this function");
@@ -169,13 +182,29 @@ function claimPrize() public {
     emit TotalPrizesUpdated(totalPrizes);
 }
 
-function setWinner(address _winner, uint256 _amount) external onlyOwner {
-    require(_amount > 0, "Invalid amount");
-    require(address(this).balance >= _amount, "Insufficient contract balance");
+function setWinner(address _winner, uint256 _amount, uint256 _betId, uint256 _number) external onlyOwner {
+        require(_amount > 0, "Invalid amount");
+        require(address(this).balance >= _amount, "Insufficient contract balance");
 
-    winnings[_winner] += _amount;
-    emit WinnerSet(bytes32(0), _winner, _amount);
-    emit LastWinnerUpdated(_winner);
+        winnings[_winner] += _amount;
+
+        winnerHistory[_betId] = WinnerData({
+            winner: _winner,
+            amount: _amount,
+            number: _number,
+            timestamp: block.timestamp,
+            prizesETH: _amount
+        });
+
+        totalWinners++;
+
+        emit WinnerSet(bytes32(_betId), _winner, _amount, _number);
+        emit LastWinnerUpdated(_winner);
+    }
+
+    function getWinnerByBetId(uint256 _betId) external view returns (WinnerData memory) {
+        return winnerHistory[_betId];
+    }
 }
 
 function setBetResult(uint256 _drawId, uint256 _winningNumber) external onlyOwner {
