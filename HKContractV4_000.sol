@@ -1,7 +1,3 @@
-/**
- *Submitted for verification at sepolia.basescan.org on 2025-03-18
-*/
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -36,8 +32,7 @@ contract BetHistory {
         string text;
         uint256 timestamp;
         bool isDeleted;
-        bool edited;
-        uint256 editedTimestamp;
+
     }
 
     
@@ -65,7 +60,6 @@ contract BetHistory {
     uint256 public totalWinners;
     mapping(bytes32 => uint256) public betLikeCount;
     mapping(uint256 => uint256) private likeCounts;
-    mapping(bytes32 => Comment[]) public betComments;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -82,7 +76,6 @@ contract BetHistory {
     );
 
     event BetResultSet(uint256 drawId, uint256 winningNumber);
-    event CommentAdded(bytes32 betId, address indexed user, string comment, uint256 timestamp);
     event TotalCommentsUpdated(bytes32 betId, uint256 totalComments);
     event CommentUpdated(bytes32 betId, address indexed user, uint256 commentIndex, string newComment);
     event CommentDeleted(bytes32 betId, address indexed user, uint256 commentIndex);
