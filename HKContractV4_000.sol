@@ -1,3 +1,4 @@
+//v4.0
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -19,6 +20,7 @@ contract BetHistory {
         bool isETH;
         uint256 likeCount;
         uint256 commentCount;
+        uint256 payoutAmount;
 
     }
 
@@ -49,13 +51,21 @@ contract BetHistory {
 
     }
 
-    struct Comment {
+    struct CommentData {
         address commenter;
         string text;
         uint256 timestamp;
         bool isDeleted;
 
     }
+
+    struct BetComment {
+        address commenter;
+        uint256 timestamp;
+        string commentText;
+        bool isDeleted;
+    }
+
 
     
     struct BetResult {
@@ -69,7 +79,7 @@ contract BetHistory {
     mapping(uint256 => BetResult) public betResults;
     mapping(bytes32 => mapping(address => bool)) public betLikes;
     mapping(bytes32 => uint256) public totalLikes;
-    mapping(bytes32 => Comment[]) public betComments;
+    mapping(bytes32 => BetComment[]) public betComments;
     mapping(bytes32 => uint256) public totalComments;
     mapping(address => uint256) public winnings;
     mapping(bytes32 => address) public betWinners;
@@ -86,10 +96,11 @@ contract BetHistory {
     LeaderboardReward public topBettor;
     uint256 public lastLeaderboardReset;
     uint256 public rewardAmount;
-    mapping(bytes32 => LikeData[]) public betLikes;
+    mapping(bytes32 => LikeData[]) public betLikeDetails;
     mapping(bytes32 => mapping(address => bool)) public hasLiked;
-    mapping(bytes32 => uint256) public betLikeCount;
-    mapping(bytes32 => mapping(address => bool)) public hasLiked;
+    mapping(bytes32 => LikeData[]) public betLikesArray;
+    mapping(bytes32 => uint256) public commentCount;
+    mapping(bytes32 => LikeData[]) public betLikeList;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -134,42 +145,45 @@ contract BetHistory {
         owner = msg.sender;
     }
 
-    function placeBet(string memory _number, uint256 _times, bool _isETH) external payable {
-        require(bytes(_number).length >= 1 && bytes(_number).length <= 4, "Invalid number length");
-        uint256 totalCost = _times * betPrice;
-        require(msg.value == totalCost, "Incorrect ETH amount");
+    function placeBet(string memory _number, uint256 _times, bool _isETH, uint256 _payoutAmount) external payable {
+    require(bytes(_number).length >= 1 && bytes(_number).length <= 4, "Invalid number length");
+    uint256 totalCost = _times * betPrice;
+    require(msg.value == totalCost, "Incorrect ETH amount");
 
-        bytes32 betId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.number));
-    
-        Bet memory newBet = Bet({
-            player: msg.sender,
-            betId: betId,
-            number: _number,
-            betAmount: _times,
-            timestamp: block.timestamp,
-            blockNumber: block.number,
-            txHash: blockhash(block.number - 1),
-            isETH: _isETH
-            likeCount: 0
-            commentCount: 0
-        });
+    bytes32 betId = keccak256(abi.encodePacked(msg.sender, block.timestamp, block.number));
 
-        betHistory.push(newBet);
-        userBets[msg.sender].push(newBet);
-        totalBetsByPlayer[msg.sender] += _times;
+    Bet memory newBet = Bet({
+        player: msg.sender,
+        betId: betId,
+        number: _number,
+        betAmount: _times,
+        timestamp: block.timestamp,
+        blockNumber: block.number,
+        txHash: blockhash(block.number - 1),
+        likeCount: 0,
+        commentCount: 0,
+        payoutAmount: _payoutAmount,
+        isETH: _isETH
 
-        if (totalBetsByPlayer[msg.sender] > topBettor.totalBets) {
+    });
+
+    betHistory.push(newBet);
+    userBets[msg.sender].push(newBet);
+    totalBetsByPlayer[msg.sender] += _times;
+
+    if (totalBetsByPlayer[msg.sender] > topBettor.totalBets) {
         topBettor = LeaderboardReward(msg.sender, totalBetsByPlayer[msg.sender]);
-
     }
 
-        playerStats[msg.sender].totalBets += 1;
-        playerStats[msg.sender].totalAmountBet += totalCost;
+    playerStats[msg.sender].totalBets += 1;
+    playerStats[msg.sender].totalAmountBet += totalCost;
 
-        emit BetPlaced(msg.sender, betId, _number, _times, block.timestamp, block.number, blockhash(block.number - 1));
-        emit TotalPlayersUpdated(betHistory.length);
-        emit TotalPayoutUpdated(totalPayout());
-    }
+    emit BetPlaced(msg.sender, betId, _number, _times, block.timestamp, block.number, blockhash(block.number - 1));
+    emit TotalPlayersUpdated(betHistory.length);
+    emit TotalPayoutUpdated(totalPayout());
+}
+
+
 
     function getPlayerStats(address _player) external view returns (uint256, uint256, uint256, uint256) {
         PlayerStats memory stats = playerStats[_player];
@@ -265,39 +279,35 @@ contract BetHistory {
     require(!hasLiked[betId][msg.sender], "You already liked this bet");
 
     LikeData memory newLike = LikeData({
-        liker: msg.sender,
-        timestamp: block.timestamp,
-        likeType: likeType
-    });
+    liker: msg.sender,
+    timestamp: block.timestamp,
+    likeType: likeType
+});
 
-    function likeBet(bytes32 betId, string memory likeType) external {
-    require(!hasLiked[betId][msg.sender], "You already liked this bet");
+betLikeList[betId].push(newLike); // Simpan data like
 
-    LikeData memory newLike = LikeData({
-        liker: msg.sender,
-        timestamp: block.timestamp,
-        likeType: likeType
-    });
-
-    betLikes[betId].push(newLike);
+    betLikes[betId][msg.sender] = true;
     hasLiked[betId][msg.sender] = true;
     betLikeCount[betId]++; // 🔹 Tambah jumlah like
 
     emit BetLiked(betId, msg.sender, block.timestamp, likeType, betLikeCount[betId]);
-}
+    }
 
-function unlikeBet(bytes32 betId) external {
-    require(hasLiked[betId][msg.sender], "You haven't liked this bet yet");
+    function unlikeBet(bytes32 betId) external {
+        require(hasLiked[betId][msg.sender], "You haven't liked this bet yet");
 
     // Cari dan hapus like dari user
-    LikeData[] storage likes = betLikes[betId];
-    for (uint256 i = 0; i < likes.length; i++) {
-        if (likes[i].liker == msg.sender) {
-            likes[i] = likes[likes.length - 1];
-            likes.pop();
-            break;
+    betLikes[betId][msg.sender] = true; // Pastikan betLikes benar sebagai mapping
+
+        LikeData[] storage likes = betLikesArray[betId]; // Ambil array dari mapping betLikesArray
+        for (uint256 i = 0; i < likes.length; i++) {
+            if (likes[i].liker == msg.sender) {
+                likes[i] = likes[likes.length - 1]; // Ganti dengan elemen terakhir
+                likes.pop(); // Hapus elemen terakhir
+                break;
+            }
         }
-    }
+
 
     hasLiked[betId][msg.sender] = false;
     betLikeCount[betId]--; // 🔹 Kurangi jumlah like
@@ -318,10 +328,6 @@ function unlikeBet(bytes32 betId) external {
     }
 
     function getLikeCount(bytes32 betId) public view returns (uint256) {
-        return betLikeCount[betId];
-    }
-
-    function getLikeCount(bytes32 betId) public view returns (uint256) {
         return bets[betId].likeCount;
     }
 
@@ -330,31 +336,35 @@ function unlikeBet(bytes32 betId) external {
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
-        require(bytes(_comment).length > 0, "Comment cannot be empty");
-    
-        CommentData memory newComment = CommentData({
-            commenter: msg.sender,
-            text: _comment,
-            timestamp: block.timestamp,
-            isDeleted: false
-        });
+    require(bytes(_comment).length > 0, "Comment cannot be empty");
 
-        betComments[betId].push(newComment);
-        bets[betId].commentCount++; // 🔹 Tambah jumlah komentar
+    BetComment memory newComment = BetComment({
+    commenter: msg.sender,
+    commentText: _comment, // ✅ Sesuaikan nama dengan struct
+    timestamp: block.timestamp,
+    isDeleted: false
+});
 
-        emit CommentAdded(betId, msg.sender, _comment, block.timestamp);
-    }
+
+    betComments[betId].push(newComment);
+
+    commentCount[betId]++; // ✅ Tambah jumlah komentar dengan benar
+
+    emit CommentAdded(betId, msg.sender, _comment, block.timestamp);
+}
+
 
     function editComment(bytes32 betId, uint256 commentIndex, string memory newComment) external {
-        require(bytes(newComment).length > 0, "New comment cannot be empty");
-        require(commentIndex < betComments[betId].length, "Invalid comment index");
-        require(betComments[betId][commentIndex].commenter == msg.sender, "Not your comment");
-        require(!betComments[betId][commentIndex].isDeleted, "Comment is deleted");
+    require(bytes(newComment).length > 0, "New comment cannot be empty");
+    require(commentIndex < betComments[betId].length, "Invalid comment index");
+    require(betComments[betId][commentIndex].commenter == msg.sender, "Not your comment");
+    require(!betComments[betId][commentIndex].isDeleted, "Comment is deleted"); // ✅ Sekarang ini valid
 
-        betComments[betId][commentIndex].text = newComment;
+    betComments[betId][commentIndex].commentText = newComment;
 
-        emit CommentUpdated(betId, msg.sender, commentIndex, newComment);
-    }
+    emit CommentUpdated(betId, msg.sender, commentIndex, newComment);
+}
+
 
     function deleteComment(bytes32 betId, uint256 commentIndex) external {
         require(commentIndex < betComments[betId].length, "Invalid comment index");
@@ -376,8 +386,22 @@ function unlikeBet(bytes32 betId) external {
     }
 
     function getComments(bytes32 betId) external view returns (CommentData[] memory) {
-        return betComments[betId];
+    BetComment[] storage comments = betComments[betId];
+    CommentData[] memory commentList = new CommentData[](comments.length);
+
+    for (uint256 i = 0; i < comments.length; i++) {
+        commentList[i] = CommentData({
+            commenter: comments[i].commenter,
+            text: comments[i].commentText,  // Sesuaikan dengan nama variabel struct
+            timestamp: comments[i].timestamp,
+            isDeleted: comments[i].isDeleted  // Tambahkan field yang hilang
+        });
     }
+
+    return commentList;
+}
+
+
 
     function contractBalance() external view returns (uint256) {
         return address(this).balance;
