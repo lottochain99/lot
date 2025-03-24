@@ -20,6 +20,8 @@ contract BetHistory {
         uint256 blockNumber;
         bytes32 txHash;
         bool isETH;
+        uint256 likeCount;
+        uint256 commentCount;
     }
 
     struct Comment {
@@ -90,7 +92,10 @@ contract BetHistory {
             timestamp: block.timestamp,
             blockNumber: block.number,
             txHash: blockhash(block.number - 1),
+            likeCount: 0,
+            commentCount: 0,
             isETH: _isETH
+
         });
 
         betHistory.push(newBet);
