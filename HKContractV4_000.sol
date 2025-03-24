@@ -40,6 +40,13 @@ contract BetHistory {
         uint256 prizesETH;
     }
 
+    struct LikeData {
+        address liker;
+        uint256 timestamp;
+        string likeType;
+
+    }
+
     struct Comment {
         address commenter;
         string text;
@@ -77,6 +84,8 @@ contract BetHistory {
     LeaderboardReward public topBettor;
     uint256 public lastLeaderboardReset;
     uint256 public rewardAmount;
+    mapping(bytes32 => LikeData[]) public betLikes;
+    mapping(bytes32 => mapping(address => bool)) public hasLiked;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -107,6 +116,8 @@ contract BetHistory {
     event BetLiked(bytes32 indexed betId, address indexed liker);
     event RewardDistributed(address indexed winner, uint256 amount);
     event CommentAdded(bytes32 indexed betId, address indexed commenter, string comment, uint256 timestamp);
+    event BetLiked(bytes32 indexed betId, address indexed liker, uint256 timestamp, string likeType);
+    event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -242,38 +253,40 @@ contract BetHistory {
         emit ETHClaimed(msg.sender, amount);
     }
 
-    function likeBet(bytes32 betId) external {
-        require(!betLikes[betId][msg.sender], "You already liked this bet");
+    function likeBet(bytes32 betId, string memory likeType) external {
+        require(!hasLiked[betId][msg.sender], "You already liked this bet");
 
-        betLikes[betId][msg.sender] = true;
-        betLikeCount[betId]++;
-        betLikers[betId].push(msg.sender);
+        LikeData memory newLike = LikeData({
+            liker: msg.sender,
+            timestamp: block.timestamp,
+            likeType: likeType
+        });
 
-        emit BetLiked(betId, msg.sender);
+        betLikes[betId].push(newLike);
+        hasLiked[betId][msg.sender] = true;
+
+        emit BetLiked(betId, msg.sender, block.timestamp, likeType);
     }
-
-    event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
 
     function unlikeBet(bytes32 betId) external {
-        require(betLikes[betId][msg.sender], "You haven't liked this bet yet");
+        require(hasLiked[betId][msg.sender], "You haven't liked this bet yet");
 
-        betLikes[betId][msg.sender] = false;
-        betLikeCount[betId]--;
-
-    address[] storage likers = betLikers[betId];
-    for (uint256 i = 0; i < likers.length; i++) {
-        if (likers[i] == msg.sender) {
-            likers[i] = likers[likers.length - 1];
-            likers.pop();
-            break;
+        // Cari dan hapus like dari user
+        LikeData[] storage likes = betLikes[betId];
+        for (uint256 i = 0; i < likes.length; i++) {
+            if (likes[i].liker == msg.sender) {
+                likes[i] = likes[likes.length - 1]; // Ganti dengan elemen terakhir
+                likes.pop(); // Hapus elemen terakhir
+                break;
+            }
         }
+
+        hasLiked[betId][msg.sender] = false;
+        emit BetUnliked(betId, msg.sender, likes.length);
     }
 
-    emit BetUnliked(betId, msg.sender, betLikeCount[betId]);
-    }
-
-    function getBetLikeCount(bytes32 betId) external view returns (uint256) {
-        return betLikeCount[betId];
+    function hasUserLiked(bytes32 betId, address user) external view returns (bool) {
+        return hasLiked[betId][user];
     }
 
     function getBetLikers(bytes32 betId) external view returns (address[] memory) {
