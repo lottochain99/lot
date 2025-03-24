@@ -288,6 +288,10 @@ contract BetHistory {
         return betLikeCount[betId];
     }
 
+    function hasLikedBet(address user, bytes32 betId) external view returns (bool) {
+        return betLikes[betId][user];
+    }
+
     function addComment(bytes32 betId, string memory _comment) external {
     require(bytes(_comment).length > 0, "Comment cannot be empty");
 
