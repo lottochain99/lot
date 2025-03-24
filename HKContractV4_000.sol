@@ -17,6 +17,7 @@ contract BetHistory {
         uint256 blockNumber;
         bytes32 txHash;
         bool isETH;
+        uint256 likeCount;
 
     }
 
@@ -144,6 +145,7 @@ contract BetHistory {
             blockNumber: block.number,
             txHash: blockhash(block.number - 1),
             isETH: _isETH
+            likeCount: 0
         });
 
         betHistory.push(newBet);
@@ -254,36 +256,43 @@ contract BetHistory {
     }
 
     function likeBet(bytes32 betId, string memory likeType) external {
-        require(!hasLiked[betId][msg.sender], "You already liked this bet");
+    require(!hasLiked[betId][msg.sender], "You already liked this bet");
 
-        LikeData memory newLike = LikeData({
-            liker: msg.sender,
-            timestamp: block.timestamp,
-            likeType: likeType
-        });
+    LikeData memory newLike = LikeData({
+        liker: msg.sender,
+        timestamp: block.timestamp,
+        likeType: likeType
+    });
 
-        betLikes[betId].push(newLike);
-        hasLiked[betId][msg.sender] = true;
+    betLikes[betId].push(newLike);
+    hasLiked[betId][msg.sender] = true;
 
-        emit BetLiked(betId, msg.sender, block.timestamp, likeType);
-    }
+    // 🔹 Tambahkan jumlah like di struct Bet
+    bets[betId].likeCount++;
 
-    function unlikeBet(bytes32 betId) external {
-        require(hasLiked[betId][msg.sender], "You haven't liked this bet yet");
+    emit BetLiked(betId, msg.sender, block.timestamp, likeType);
+}
 
-        // Cari dan hapus like dari user
-        LikeData[] storage likes = betLikes[betId];
-        for (uint256 i = 0; i < likes.length; i++) {
-            if (likes[i].liker == msg.sender) {
-                likes[i] = likes[likes.length - 1]; // Ganti dengan elemen terakhir
-                likes.pop(); // Hapus elemen terakhir
-                break;
-            }
+function unlikeBet(bytes32 betId) external {
+    require(hasLiked[betId][msg.sender], "You haven't liked this bet yet");
+
+    // Cari dan hapus like dari user
+    LikeData[] storage likes = betLikes[betId];
+    for (uint256 i = 0; i < likes.length; i++) {
+        if (likes[i].liker == msg.sender) {
+            likes[i] = likes[likes.length - 1]; // Ganti dengan elemen terakhir
+            likes.pop(); // Hapus elemen terakhir
+            break;
         }
-
-        hasLiked[betId][msg.sender] = false;
-        emit BetUnliked(betId, msg.sender, likes.length);
     }
+
+    hasLiked[betId][msg.sender] = false;
+
+    // 🔹 Kurangi jumlah like di struct Bet
+    bets[betId].likeCount--;
+
+    emit BetUnliked(betId, msg.sender, likes.length);
+}
 
     function hasUserLiked(bytes32 betId, address user) external view returns (bool) {
         return hasLiked[betId][user];
@@ -299,6 +308,10 @@ contract BetHistory {
 
     function getLikeCount(bytes32 betId) public view returns (uint256) {
         return betLikeCount[betId];
+    }
+
+    function getLikeCount(bytes32 betId) public view returns (uint256) {
+        return bets[betId].likeCount;
     }
 
     function hasLikedBet(address user, bytes32 betId) external view returns (bool) {
