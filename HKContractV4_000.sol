@@ -18,6 +18,7 @@ contract BetHistory {
         bytes32 txHash;
         bool isETH;
         uint256 likeCount;
+        uint256 commentCount;
 
     }
 
@@ -150,6 +151,7 @@ contract BetHistory {
             txHash: blockhash(block.number - 1),
             isETH: _isETH
             likeCount: 0
+            commentCount: 0
         });
 
         betHistory.push(newBet);
