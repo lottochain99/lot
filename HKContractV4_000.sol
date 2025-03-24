@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 
 contract BetHistory {
     address public owner;
-    address[] public players;
     uint256 public minBet = 1;
     uint256 public maxBet = 99;
     uint256 public betPrice = 0.000256 ether;
@@ -21,7 +20,6 @@ contract BetHistory {
         uint256 likeCount;
         uint256 commentCount;
         uint256 payoutAmount;
-
     }
 
     struct PlayerStats {
@@ -45,25 +43,11 @@ contract BetHistory {
         uint256 timestamp;
     }
 
-    // Simpan informasi detail dari setiap like
     struct LikeData {
         address liker;
         uint256 timestamp;
         string likeType;
         string reason;
-    }
-
-// Mapping daftar like per bet
-mapping(bytes32 => LikeData[]) public betLikeList;
-
-    }
-
-    struct CommentData {
-        address commenter;
-        string text;
-        uint256 timestamp;
-        bool isDeleted;
-
     }
 
     struct BetComment {
@@ -73,8 +57,6 @@ mapping(bytes32 => LikeData[]) public betLikeList;
         bool isDeleted;
     }
 
-
-    
     struct BetResult {
         uint256 drawId;
         uint256 winningNumber;
@@ -84,40 +66,44 @@ mapping(bytes32 => LikeData[]) public betLikeList;
     Bet[] public betHistory;
     mapping(address => Bet[]) public userBets;
     mapping(uint256 => BetResult) public betResults;
-    mapping(bytes32 => mapping(address => bool)) public betLikes;
-    mapping(bytes32 => uint256) public totalLikes;
-    mapping(bytes32 => BetComment[]) public betComments;
-    mapping(bytes32 => uint256) public totalComments;
-    mapping(address => uint256) public winnings;
-    mapping(bytes32 => address) public betWinners;
-    mapping(bytes32 => Bet) public bets;
-    mapping(bytes32 => address[]) public betLikers;
     mapping(address => uint256) public totalBetsByPlayer;
-    mapping(uint256 => uint256) public totalPayoutPerDraw;
-    mapping(bytes32 => uint256) public betToDrawId;
-    mapping(uint256 => WinnerData) public winnerHistory; 
-    uint256 public totalWinners;
-    mapping(bytes32 => uint256) public betLikeCount;
-    mapping(uint256 => uint256) private likeCounts;
     mapping(address => PlayerStats) public playerStats;
+    mapping(address => bool) public isPlayerRegistered;
+    address[] public players;
+    mapping(address => uint256) public winnings;
+    mapping(uint256 => WinnerData) public winnerHistory;
+    uint256 public totalWinners;
+    uint256 public lastLeaderboardReset;
+    mapping(address => uint256) public winnings;
+    mapping(bytes32 => LikeData[]) public betLikeList;
+    mapping(bytes32 => mapping(address => bool)) public betLikes;
+    mapping(bytes32 => mapping(address => bool)) public hasLiked;
+    mapping(bytes32 => uint256) public betLikeCount;
+    mapping(bytes32 => LikeData[]) public betLikesArray;
+    mapping(bytes32 => address[]) public betLikers;
+    mapping(uint256 => uint256) public likeCounts;
+    mapping(uint256 => bool) public betExists;
+    mapping(bytes32 => BetComment[]) public betComments;
+    mapping(bytes32 => uint256) public commentCount;
+    mapping(address => Bet[]) public userBets;
+    mapping(bytes32 => BetComment[]) public betComments;
+    mapping(bytes32 => uint256) public commentCount;
+    mapping(address => bool) public uniquePlayers;
+    mapping(address => bool) public hasWon;
+    mapping(bytes32 => uint256) public betLikeCount;
+
     LeaderboardReward public topBettor;
     uint256 public lastLeaderboardReset;
     uint256 public rewardAmount;
-    mapping(bytes32 => LikeData[]) public betLikeDetails;
-    mapping(bytes32 => mapping(address => bool)) public hasLiked;
-    mapping(bytes32 => LikeData[]) public betLikesArray;
-    mapping(bytes32 => uint256) public commentCount;
-    mapping(bytes32 => LikeData[]) public betLikeList;
-    mapping(address => bool) private uniquePlayers;
-    uint256 private uniquePlayerCount;
-    mapping(address => bool) private uniquePlayers;
-    address[] private playerList;
-    mapping(address => bool) private hasWon;
-    address[] private winnerList;
+    uint256 public totalWinners;
 
-    event PlayerJoined(address indexed player, uint256 totalPlayers);
-    event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
-    event TotalPrizesUpdated(uint256 newTotalPrizes);
+   event PlayerStatsUpdated(
+       address indexed player,
+       uint256 totalBets,
+       uint256 totalAmountBet,
+       uint256 totalWins,
+       uint256 totalPayout
+   );
 
     event BetPlaced(
         address indexed player,
@@ -129,25 +115,35 @@ mapping(bytes32 => LikeData[]) public betLikeList;
         bytes32 txHash
     );
 
-    event BetResultSet(uint256 drawId, uint256 winningNumber);
-    event TotalCommentsUpdated(bytes32 betId, uint256 totalComments);
-    event CommentUpdated(bytes32 betId, address indexed user, uint256 commentIndex, string newComment);
-    event CommentDeleted(bytes32 betId, address indexed user, uint256 commentIndex);
-    event WinnerSet(bytes32 betId, address indexed winner, uint256 amount);
-    event BetWon(bytes32 indexed betId, address indexed winner, uint256 winningNumber, uint256 prize);
-    event ETHClaimed(address indexed winner, uint256 amount);
+    event BetLiked(
+        bytes32 indexed betId, 
+        address indexed liker, 
+        uint256 timestamp, 
+        string likeType, 
+        string reason, 
+        uint256 totalLikes
+    );
+
     event TotalPlayersUpdated(uint256 totalPlayers);
     event TotalPayoutUpdated(uint256 totalPayout);
-    event LastWinnerUpdated(address indexed winner);
-    event WinnerSet(bytes32 indexed betId, address indexed winner, uint256 amount, uint256 number);
-    event BetLiked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
-    event BetLiked(bytes32 indexed betId, address indexed liker);
+    event TopBettorUpdated(address indexed player, uint256 totalBets);
     event RewardDistributed(address indexed winner, uint256 amount);
-    event CommentAdded(bytes32 indexed betId, address indexed commenter, string comment, uint256 timestamp);
-    event BetLiked(bytes32 indexed betId, address indexed liker, uint256 timestamp, string likeType);
-    event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
-    event BetLiked(bytes32 indexed betId, address indexed liker, uint256 timestamp, string likeType, uint256 newLikeCount);
-    event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 timestamp, uint256 newLikeCount);
+    event WinnerSet(bytes32 indexed betId, address indexed winner, uint256 amount, uint256 number);
+    event LastWinnerUpdated(address indexed lastWinner);
+    event ETHClaimed(address indexed claimer, uint256 amount);
+    event BetUnliked(bytes32 indexed betId, address indexed unliker, uint256 timestamp, uint256 totalLikes);
+    event CommentAdded(bytes32 indexed betId, address indexed commenter, string commentText, uint256 timestamp);
+    event CommentUpdated(bytes32 indexed betId, address indexed commenter, uint256 commentIndex, string newComment);
+    event CommentDeleted(bytes32 indexed betId, address indexed commenter, uint256 commentIndex);
+    event BetPlaced(address indexed user, bytes32 indexed betId, uint256 amount, uint256 timestamp);
+    event CommentAdded(bytes32 indexed betId, address indexed commenter, string commentText, uint256 timestamp);
+    event CommentUpdated(bytes32 indexed betId, address indexed commenter, uint256 commentIndex, string newComment);
+    event CommentDeleted(bytes32 indexed betId, address indexed commenter, uint256 commentIndex);
+    event PayoutUpdated(uint256 newTotalPayout);
+    event WinnerUpdated(address indexed winner);
+    event PlayerRegistered(address indexed player);
+    event WinnerRegistered(address indexed winner);
+    event ETHWithdrawn(address indexed owner, uint256 amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -185,7 +181,8 @@ mapping(bytes32 => LikeData[]) public betLikeList;
     totalBetsByPlayer[msg.sender] += _times;
 
     if (totalBetsByPlayer[msg.sender] > topBettor.totalBets) {
-        topBettor = LeaderboardReward(msg.sender, totalBetsByPlayer[msg.sender]);
+    topBettor = LeaderboardReward(msg.sender, totalBetsByPlayer[msg.sender]);
+    emit TopBettorUpdated(msg.sender, totalBetsByPlayer[msg.sender]);
     }
 
     playerStats[msg.sender].totalBets += 1;
