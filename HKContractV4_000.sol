@@ -280,12 +280,12 @@ contract BetHistory {
         return betLikers[betId];
     }
 
-    function getAllLikes(uint256 betId) public view returns (address[] memory) {
-        return betLikers[bytes32(betId)];
+    function getAllLikes(bytes32 betId) public view returns (address[] memory) {
+        return betLikers[betId];
     }
 
-    function getLikeCount(uint256 betId) public view returns (uint256) {
-        return likeCounts[betId];
+    function getLikeCount(bytes32 betId) public view returns (uint256) {
+        return betLikeCount[betId];
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
