@@ -38,16 +38,23 @@ contract BetHistory {
 
     struct WinnerData {
         address winner;
-        uint256 amount;
         uint256 number;
-        uint256 timestamp;
+        uint256 amount;
         uint256 prizesETH;
+        uint256 betId;
+        uint256 timestamp;
     }
 
+    // Simpan informasi detail dari setiap like
     struct LikeData {
         address liker;
         uint256 timestamp;
         string likeType;
+        string reason;
+    }
+
+// Mapping daftar like per bet
+mapping(bytes32 => LikeData[]) public betLikeList;
 
     }
 
@@ -247,7 +254,8 @@ contract BetHistory {
             amount: _amount,
             number: _number,
             timestamp: block.timestamp,
-            prizesETH: _amount
+            prizesETH: _amount,
+            betId: _betId
         });
 
         totalWinners++;
@@ -257,17 +265,8 @@ contract BetHistory {
     }
 
     function getWinnerByBetId(uint256 _betId) external view returns (WinnerData memory) {
+        require(winnerHistory[_betId].winner != address(0), "Pemenang tidak ditemukan");
         return winnerHistory[_betId];
-    }
-
-    function setBetResult(uint256 _drawId, uint256 _winningNumber) external onlyOwner {
-        betResults[_drawId] = BetResult({
-            drawId: _drawId,
-            winningNumber: _winningNumber,
-            isProcessed: true
-        });
-
-        emit BetResultSet(_drawId, _winningNumber);
     }
 
     function claimETH() external {
@@ -281,22 +280,40 @@ contract BetHistory {
         emit ETHClaimed(msg.sender, amount);
     }
 
-    function likeBet(bytes32 betId, string memory likeType) external {
-    require(!hasLiked[betId][msg.sender], "You already liked this bet");
+    function likeBet(bytes32 betId, string memory likeType, string memory reason) external {
+        require(!hasLiked[betId][msg.sender], "You already liked this bet");
 
-    LikeData memory newLike = LikeData({
-    liker: msg.sender,
-    timestamp: block.timestamp,
-    likeType: likeType
-});
+        LikeData memory newLike = LikeData({
+            liker: msg.sender,
+            timestamp: block.timestamp,
+            likeType: likeType,
+            reason: reason // 🔹 Simpan alasan
+        });
 
-betLikeList[betId].push(newLike); // Simpan data like
+        betLikeList[betId].push(newLike); // Simpan data like
+        betLikes[betId][msg.sender] = true;
+        hasLiked[betId][msg.sender] = true;
+        betLikeCount[betId]++; // 🔹 Tambah jumlah like
 
-    betLikes[betId][msg.sender] = true;
-    hasLiked[betId][msg.sender] = true;
-    betLikeCount[betId]++; // 🔹 Tambah jumlah like
+        emit BetLiked(betId, msg.sender, block.timestamp, likeType, reason, betLikeCount[betId]);
+    }
 
-    emit BetLiked(betId, msg.sender, block.timestamp, likeType, betLikeCount[betId]);
+    function getBetLikersPaginated(bytes32 betId, uint256 start, uint256 limit) external view returns (LikeData[] memory) {
+        LikeData[] storage likers = betLikeList[betId];
+        uint256 likersCount = likers.length;
+
+         if (start >= likersCount) {
+            return new LikeData ; // Jika di luar batas, kembalikan array kosong
+        }
+
+        uint256 end = start + limit > likersCount ? likersCount : start + limit;
+        LikeData[] memory paginatedLikers = new LikeData[](end - start);
+
+        for (uint256 i = start; i < end; i++) {
+            paginatedLikers[i - start] = likers[i];
+        }
+
+        return paginatedLikers;
     }
 
     function unlikeBet(bytes32 betId) external {
@@ -313,7 +330,6 @@ betLikeList[betId].push(newLike); // Simpan data like
                 break;
             }
         }
-
 
     hasLiked[betId][msg.sender] = false;
     betLikeCount[betId]--; // 🔹 Kurangi jumlah like
