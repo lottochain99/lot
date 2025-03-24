@@ -101,6 +101,12 @@ contract BetHistory {
     mapping(bytes32 => LikeData[]) public betLikesArray;
     mapping(bytes32 => uint256) public commentCount;
     mapping(bytes32 => LikeData[]) public betLikeList;
+    mapping(address => bool) private uniquePlayers;
+    uint256 private uniquePlayerCount;
+    mapping(address => bool) private uniquePlayers;
+    address[] private playerList;
+    mapping(address => bool) private hasWon;
+    address[] private winnerList;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -386,114 +392,109 @@ betLikeList[betId].push(newLike); // Simpan data like
         emit CommentDeleted(betId, msg.sender, commentIndex);
     }
 
-    function getAllBets() public view returns (Bet[] memory) {
-        return betHistory;
+    function getAllBets(uint256 limit) public view returns (Bet[] memory) {
+        uint256 betCount = betHistory.length;
+        uint256 fetchCount = limit > 0 && limit < betCount ? limit : betCount;
+
+        Bet[] memory bets = new Bet[](fetchCount);
+        for (uint256 i = 0; i < fetchCount; i++) {
+            bets[i] = betHistory[i];
+        }
+
+        return bets;
     }
 
-    function getUserBets(address _user) public view returns (Bet[] memory) {
-        return userBets[_user];
+    function getUserBets(address _user, uint256 startIndex, uint256 limit) public view returns (Bet[] memory) {
+        Bet[] storage bets = userBets[_user];
+        uint256 betCount = bets.length;
+    
+        if (betCount == 0 || startIndex >= betCount) {
+            return new Bet ; // Jika tidak ada taruhan atau startIndex di luar batas, kembalikan array kosong
+        }
+
+        uint256 fetchCount = (limit > 0 && startIndex + limit <= betCount) ? limit : betCount - startIndex;
+        Bet[] memory paginatedBets = new Bet[](fetchCount);
+
+        for (uint256 i = 0; i < fetchCount; i++) {
+            paginatedBets[i] = bets[startIndex + i];
+        }
+
+        return paginatedBets;
     }
 
-    function getComments(bytes32 betId) external view returns (CommentData[] memory) {
-    BetComment[] storage comments = betComments[betId];
-    CommentData[] memory commentList = new CommentData[](comments.length);
+    function getPaginatedComments(bytes32 betId, uint256 start, uint256 limit) external view returns (CommentData[] memory) {
+        BetComment[] storage comments = betComments[betId];
+        uint256 totalComments = comments.length;
 
-    for (uint256 i = 0; i < comments.length; i++) {
-        commentList[i] = CommentData({
-            commenter: comments[i].commenter,
-            text: comments[i].commentText,  // Sesuaikan dengan nama variabel struct
-            timestamp: comments[i].timestamp,
-            isDeleted: comments[i].isDeleted  // Tambahkan field yang hilang
-        });
+        if (start >= totalComments) {
+            return new CommentData ;  // Kembalikan array kosong jika di luar batas
+        }
+
+        uint256 end = start + limit > totalComments ? totalComments : start + limit;
+        CommentData[] memory commentList = new CommentData[](end - start);
+
+        for (uint256 i = start; i < end; i++) {
+            commentList[i - start] = CommentData({
+                commenter: comments[i].commenter,
+                text: comments[i].commentText,
+                timestamp: comments[i].timestamp,
+                isDeleted: comments[i].isDeleted
+            });
+        }
+
+        return commentList;
     }
-
-    return commentList;
-}
-
-
 
     function contractBalance() external view returns (uint256) {
         return address(this).balance;
     }
 
-    function totalPlayers() public view returns (uint256) {
-        return betHistory.length;
+    function totalUniquePlayers() public view returns (uint256) {
+        return uniquePlayerCount;
     }
 
-    function totalPayout() public view returns (uint256) {
-        uint256 total;
-        for (uint256 i = 0; i < betHistory.length; i++) {
-            total += betHistory[i].betAmount;
-        }
-        return total * betPrice;
+    uint256 private totalPayoutAmount;
+
+    function updatePayout(uint256 amount) internal {
+        totalPayoutAmount += amount;
     }
 
-    function lastWinner() public view returns (address) {
-        if (betHistory.length == 0) {
-            return address(0);
+    function getTotalPayout() public view returns (uint256) {
+        return totalPayoutAmount;
+    }
+
+    address private lastWinningPlayer;
+
+    function updateWinner(address winner) internal {
+        lastWinningPlayer = winner;
+    }
+
+    function getLastWinner() public view returns (address) {
+        return lastWinningPlayer;
+    }
+
+    function registerPlayer(address player) internal {
+        if (!uniquePlayers[player]) {
+            uniquePlayers[player] = true;
+            playerList.push(player);
         }
-        return betHistory[betHistory.length - 1].player;
     }
 
     function getAllPlayers() public view returns (address[] memory) {
-    address[] memory tempPlayers = new address[](betHistory.length);
-    uint256 count = 0;
+        return playerList;
+    }
 
-    for (uint i = 0; i < betHistory.length; i++) {
-        address player = betHistory[i].player;
-        bool alreadyAdded = false;
 
-        for (uint j = 0; j < count; j++) {
-            if (tempPlayers[j] == player) {
-                alreadyAdded = true;
-                break;
-            }
-        }
-
-        if (!alreadyAdded) {
-            tempPlayers[count] = player;
-            count++;
+    function registerWinner(address player) internal {
+        if (!hasWon[player]) {
+            hasWon[player] = true;
+            winnerList.push(player);
         }
     }
 
-    address[] memory uniquePlayers = new address[](count);
-    for (uint j = 0; j < count; j++) {
-        uniquePlayers[j] = tempPlayers[j];
+    function getAllWinners() public view returns (address[] memory) {
+        return winnerList;
     }
-
-    return uniquePlayers;
-}
-
-
-function getAllWinners() public view returns (address[] memory) {
-    address[] memory tempWinners = new address[](betHistory.length);
-    uint256 count = 0;
-
-    for (uint i = 0; i < betHistory.length; i++) {
-        address player = betHistory[i].player;
-        bool alreadyAdded = false;
-
-        for (uint j = 0; j < count; j++) {
-            if (tempWinners[j] == player) {
-                alreadyAdded = true;
-                break;
-            }
-        }
-
-        if (!alreadyAdded && winnings[player] > 0) {
-            tempWinners[count] = player;
-            count++;
-        }
-    }
-
-    address[] memory uniqueWinners = new address[](count);
-    for (uint j = 0; j < count; j++) {
-        uniqueWinners[j] = tempWinners[j];
-    }
-
-    return uniqueWinners;
-}
-
 
     function withdrawETH(uint256 _amount) external onlyOwner {
         require(address(this).balance >= _amount, "Insufficient balance");
