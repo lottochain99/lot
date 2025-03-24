@@ -203,34 +203,33 @@ mapping(bytes32 => LikeData[]) public betLikeList;
         return (stats.totalBets, stats.totalAmountBet, stats.totalWins, stats.totalPayout);
     }
 
-    function getTopPlayers(uint256 topN) external view returns (address[] memory) {
-    require(topN > 0, "topN must be greater than 0");
-    require(topN <= players.length, "topN exceeds total players");
+    function getTopPlayers(uint256 topN) external view returns (address[] memory, uint256[] memory) {
+        require(topN > 0, "topN must be greater than 0");
+        require(topN <= players.length, "topN exceeds total players");
 
-    address[] memory sortedPlayers = new address[](players.length);
+        address[] memory topPlayers = new address[](topN);
+        uint256[] memory topBets = new uint256[](topN);
 
-    for (uint256 i = 0; i < players.length; i++) {
-        sortedPlayers[i] = players[i];
+        for (uint256 i = 0; i < topN; i++) {
+            topPlayers[i] = players[i];
+            topBets[i] = playerStats[players[i]].totalAmountBet;
+         }
+
+         return (topPlayers, topBets);
     }
 
-    // Sorting bisa diterapkan di sini (misalnya berdasarkan jumlah taruhan)
-    // Namun sorting dalam Solidity mahal dalam gas, lebih baik sorting dilakukan off-chain
-
-    address[] memory topPlayers = new address[](topN);
-    for (uint256 j = 0; j < topN; j++) {
-        topPlayers[j] = sortedPlayers[j];
-    }
-
-    return topPlayers;
-}
-
-    function distributeReward() external onlyOwner {
+    function distributeReward() external {
         require(block.timestamp >= lastLeaderboardReset + 7 days, "Leaderboard reset not yet due");
+    
+    // Pastikan pemanggilan hanya dilakukan pada hari Minggu pukul 08:00 UTC
+        require((block.timestamp / 1 days) % 7 == 0 && (block.timestamp % 1 days) / 1 hours == 8, "Not Sunday 08:00 UTC");
 
         address winner = topBettor.player;
-        uint256 reward = address(this).balance * 1 / 1000; // 0.1% dari saldo kontrak
-
         require(winner != address(0), "No top bettor yet");
+
+        uint256 totalBet = topBettor.totalBetAmount; // Total taruhan bettor tertinggi
+        uint256 reward = (totalBet * 5) / 100; // 5% dari total taruhan bettor tersebut
+
         require(address(this).balance >= reward, "Not enough funds");
 
     // Kirim reward ke top bettor
@@ -238,7 +237,7 @@ mapping(bytes32 => LikeData[]) public betLikeList;
 
         emit RewardDistributed(winner, reward);
 
-    // Reset leaderboard
+    // Reset leaderboard untuk periode berikutnya
         lastLeaderboardReset = block.timestamp;
         topBettor = LeaderboardReward(address(0), 0);
     }
