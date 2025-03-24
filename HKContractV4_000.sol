@@ -81,7 +81,7 @@ contract BetHistory {
     mapping(bytes32 => uint256) public betLikeCount;
     mapping(bytes32 => LikeData[]) public betLikesArray;
     mapping(bytes32 => address[]) public betLikers;
-    mapping(uint256 => uint256) public likeCounts;
+    mapping(bytes32 => uint256) public likeCounts;
     mapping(uint256 => bool) public betExists;
     mapping(bytes32 => BetComment[]) public betComments;
     mapping(bytes32 => uint256) public commentCount;
@@ -260,7 +260,7 @@ contract BetHistory {
         emit LastWinnerUpdated(_winner);
     }
 
-    function getWinnerByBetId(uint256 _betId) external view returns (WinnerData memory) {
+    function getWinnerByBetId(bytes32 _betId) external view returns (WinnerData memory) {
         require(winnerHistory[_betId].winner != address(0), "Pemenang tidak ditemukan");
         return winnerHistory[_betId];
     }
@@ -333,11 +333,11 @@ contract BetHistory {
     emit BetUnliked(betId, msg.sender, block.timestamp, betLikeCount[betId]);
 }
 
-    function hasUserLikedWithCount(uint256 betId, address user) external view returns (bool, uint256) {
+    function hasUserLikedWithCount(bytes32 betId, address user) external view returns (bool, uint256) {
         return (hasLiked[betId][user], likeCounts[betId]);
     }
 
-    function getBetLikers(uint256 betId, uint256 start, uint256 limit) public view returns (address[] memory) {
+    function getBetLikers(bytes32 betId, uint256 start, uint256 limit) public view returns (address[] memory) {
         require(betExists[betId], "Bet ID tidak valid");
         address[] storage likers = betLikers[bytes32(betId)];
         uint256 likersCount = likers.length;
@@ -357,7 +357,7 @@ contract BetHistory {
         return paginatedLikers;
     }
 
-    function getLikeCount(uint256 betId) public view returns (uint256) {
+    function getLikeCount(bytes32 betId) public view returns (uint256) {
         require(likeCounts[betId] > 0 || betExists[betId], "Bet ID tidak valid"); 
         return likeCounts[betId];
     }
