@@ -87,6 +87,8 @@ contract BetHistory {
     uint256 public rewardAmount;
     mapping(bytes32 => LikeData[]) public betLikes;
     mapping(bytes32 => mapping(address => bool)) public hasLiked;
+    mapping(bytes32 => uint256) public betLikeCount;
+    mapping(bytes32 => mapping(address => bool)) public hasLiked;
 
     event PlayerJoined(address indexed player, uint256 totalPlayers);
     event WinnerAnnounced(address indexed winner, uint256 prize, uint256 totalWinners);
@@ -119,6 +121,8 @@ contract BetHistory {
     event CommentAdded(bytes32 indexed betId, address indexed commenter, string comment, uint256 timestamp);
     event BetLiked(bytes32 indexed betId, address indexed liker, uint256 timestamp, string likeType);
     event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 likeCount);
+    event BetLiked(bytes32 indexed betId, address indexed liker, uint256 timestamp, string likeType, uint256 newLikeCount);
+    event BetUnliked(bytes32 indexed betId, address indexed liker, uint256 timestamp, uint256 newLikeCount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this function");
@@ -264,13 +268,20 @@ contract BetHistory {
         likeType: likeType
     });
 
+    function likeBet(bytes32 betId, string memory likeType) external {
+    require(!hasLiked[betId][msg.sender], "You already liked this bet");
+
+    LikeData memory newLike = LikeData({
+        liker: msg.sender,
+        timestamp: block.timestamp,
+        likeType: likeType
+    });
+
     betLikes[betId].push(newLike);
     hasLiked[betId][msg.sender] = true;
+    betLikeCount[betId]++; // 🔹 Tambah jumlah like
 
-    // 🔹 Tambahkan jumlah like di struct Bet
-    bets[betId].likeCount++;
-
-    emit BetLiked(betId, msg.sender, block.timestamp, likeType);
+    emit BetLiked(betId, msg.sender, block.timestamp, likeType, betLikeCount[betId]);
 }
 
 function unlikeBet(bytes32 betId) external {
@@ -280,18 +291,16 @@ function unlikeBet(bytes32 betId) external {
     LikeData[] storage likes = betLikes[betId];
     for (uint256 i = 0; i < likes.length; i++) {
         if (likes[i].liker == msg.sender) {
-            likes[i] = likes[likes.length - 1]; // Ganti dengan elemen terakhir
-            likes.pop(); // Hapus elemen terakhir
+            likes[i] = likes[likes.length - 1];
+            likes.pop();
             break;
         }
     }
 
     hasLiked[betId][msg.sender] = false;
+    betLikeCount[betId]--; // 🔹 Kurangi jumlah like
 
-    // 🔹 Kurangi jumlah like di struct Bet
-    bets[betId].likeCount--;
-
-    emit BetUnliked(betId, msg.sender, likes.length);
+    emit BetUnliked(betId, msg.sender, block.timestamp, betLikeCount[betId]);
 }
 
     function hasUserLiked(bytes32 betId, address user) external view returns (bool) {
