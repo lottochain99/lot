@@ -330,17 +330,20 @@ function unlikeBet(bytes32 betId) external {
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
-    require(bytes(_comment).length > 0, "Comment cannot be empty");
+        require(bytes(_comment).length > 0, "Comment cannot be empty");
+    
+        CommentData memory newComment = CommentData({
+            commenter: msg.sender,
+            text: _comment,
+            timestamp: block.timestamp,
+            isDeleted: false
+        });
 
-    betComments[betId].push(Comment({
-        commenter: msg.sender,
-        text: _comment,
-        timestamp: block.timestamp,
-        isDeleted: false
-    }));
+        betComments[betId].push(newComment);
+        bets[betId].commentCount++; // 🔹 Tambah jumlah komentar
 
-    emit CommentAdded(betId, msg.sender, _comment, block.timestamp);
-   }
+        emit CommentAdded(betId, msg.sender, _comment, block.timestamp);
+    }
 
     function editComment(bytes32 betId, uint256 commentIndex, string memory newComment) external {
         require(bytes(newComment).length > 0, "New comment cannot be empty");
@@ -349,6 +352,7 @@ function unlikeBet(bytes32 betId) external {
         require(!betComments[betId][commentIndex].isDeleted, "Comment is deleted");
 
         betComments[betId][commentIndex].text = newComment;
+
         emit CommentUpdated(betId, msg.sender, commentIndex, newComment);
     }
 
@@ -358,6 +362,8 @@ function unlikeBet(bytes32 betId) external {
         require(!betComments[betId][commentIndex].isDeleted, "Already deleted");
 
         betComments[betId][commentIndex].isDeleted = true;
+        bets[betId].commentCount--;
+
         emit CommentDeleted(betId, msg.sender, commentIndex);
     }
 
@@ -369,7 +375,7 @@ function unlikeBet(bytes32 betId) external {
         return userBets[_user];
     }
 
-    function getComments(bytes32 betId) public view returns (Comment[] memory) {
+    function getComments(bytes32 betId) external view returns (CommentData[] memory) {
         return betComments[betId];
     }
 
