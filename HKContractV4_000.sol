@@ -315,24 +315,33 @@ betLikeList[betId].push(newLike); // Simpan data like
     emit BetUnliked(betId, msg.sender, block.timestamp, betLikeCount[betId]);
 }
 
-    function hasUserLiked(bytes32 betId, address user) external view returns (bool) {
-        return hasLiked[betId][user];
+    function hasUserLikedWithCount(uint256 betId, address user) external view returns (bool, uint256) {
+        return (hasLiked[betId][user], likeCounts[betId]);
     }
 
-    function getBetLikers(bytes32 betId) external view returns (address[] memory) {
-        return betLikers[betId];
+    function getBetLikers(uint256 betId, uint256 start, uint256 limit) public view returns (address[] memory) {
+        require(betExists[betId], "Bet ID tidak valid");
+        address[] storage likers = betLikers[bytes32(betId)];
+        uint256 likersCount = likers.length;
+        require(likersCount > 0, "Belum ada yang like");
+    
+        if (start >= likersCount) {
+            return new address ; // Jika start di luar batas, kembalikan array kosong
+        }
+    
+        uint256 end = start + limit > likersCount ? likersCount : start + limit;
+        address[] memory paginatedLikers = new address[](end - start);
+    
+        for (uint256 i = start; i < end; i++) {
+            paginatedLikers[i - start] = likers[i];
+         }
+    
+        return paginatedLikers;
     }
 
-    function getAllLikes(bytes32 betId) public view returns (address[] memory) {
-        return betLikers[betId];
-    }
-
-    function getLikeCount(bytes32 betId) public view returns (uint256) {
-        return bets[betId].likeCount;
-    }
-
-    function hasLikedBet(address user, bytes32 betId) external view returns (bool) {
-        return betLikes[betId][user];
+    function getLikeCount(uint256 betId) public view returns (uint256) {
+        require(likeCounts[betId] > 0 || betExists[betId], "Bet ID tidak valid"); 
+        return likeCounts[betId];
     }
 
     function addComment(bytes32 betId, string memory _comment) external {
