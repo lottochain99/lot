@@ -7,7 +7,7 @@
     <title>Lotto Chain | 4D Random Numbers</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
+       body {
     font-family: 'Poppins', sans-serif;
     text-align: center;
     margin: 0;
@@ -42,15 +42,12 @@ h2 {
     margin-top: 20px;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 1200px;
-    width: 100%;
 }
 
 .number {
     font-size: 5rem;
     font-weight: bold;
     width: 80px;
-    max-width: 750px;
     height: 120px;
     display: flex;
     align-items: center;
@@ -97,7 +94,7 @@ button:hover {
 }
 
 #angkaChart {
-    max-width: 500px; /* Sesuaikan dengan kebutuhan */
+    max-width: 600px; /* Sesuaikan dengan kebutuhan */
     width: 100%;
     height: auto;
     display: block;
@@ -209,7 +206,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     box-sizing: border-box; /* Pastikan padding dan border tidak mengubah ukuran elemen */
-}
+} 
     </style>
 </head>
 
@@ -222,7 +219,7 @@ button:hover {
         <div class="number" id="num2">0</div>
         <div class="number" id="num3">0</div>
         <div class="number" id="num4">0</div>
-    </div>
+    </div><br>
 
     <div class="buttons">
         <button onclick="generateRandomNumbers()">Generate</button>
