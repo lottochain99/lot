@@ -29,6 +29,12 @@ h1, h2 {
     -webkit-text-fill-color: transparent;
 }
 
+h3 {
+    color: white;
+    font-size: 17px;
+    text-shadow: 0px 0px 10px #00aaff, 0px 0px 20px #0088ff;
+}
+
 #container {
       display: flex;
       justify-content: center;
@@ -260,9 +266,9 @@ button:hover {
     <br>
 
     <div id="stats" style="text-align: left;">
-    <p>🔢 Angka Paling Sering Muncul: <span id="mostFrequent"><b>-</b></span></p>
-    <p>📉 Angka Paling Jarang Muncul: <span id="leastFrequent"><b>-</b></span></p>
-    <p>📊 Total Angka Dihasilkan: <span id="totalGenerated"><b>0</b></span></p>
+    <p>Most Frequently Appearing Numbers: <span id="mostFrequent"><b>-</b></span></p>
+    <p>Rarely Appearing Numbers: <span id="leastFrequent"><b>-</b></span></p>
+    <p>Total Number Generated: <span id="totalGenerated"><b>0</b></span></p>
     </div>
     <br>
 
@@ -275,12 +281,8 @@ button:hover {
   </div><br>
 
     <div>
-    <h2>🎰 Semoga Hoki! 🎰</h2>
-    <p>Gunakan alat penghasil angka ini untuk mendapatkan kombinasi acak yang unik dan tidak terduga.
-<br><br>
-Setiap angka yang dihasilkan sepenuhnya acak dan tidak bisa diprediksi.
-<br><br>
-Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-senang!.</p>
+    <h3>Good Luck!</h3>
+    <p>Use this tool to get unique and unpredictable random combinations. <br><br> Every number generated is completely random and unpredictable. <br><br> Get random numbers for lottery, calculation or just for fun!</p>
     </div>
 
     <!-- Footer -->
@@ -368,12 +370,12 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
         ].join("");
 
         navigator.clipboard.writeText(chart).then(() => {
-            alert("Angka berhasil disalin: " + chart);
+            alert("Numbers copied successfully: " + chart);
         });
     }
 
     function resetHistory() {
-    if (confirm("Yakin ingin menghapus semua riwayat angka?")) {
+    if (confirm("Are you sure you want to delete all number history?")) {
         localStorage.removeItem("history");
         updateChart(); // Refresh chart setelah direset
     }
@@ -393,7 +395,7 @@ function downloadChart() {
             data: {
                 labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
                 datasets: [{
-                    label: 'Frekuensi Angka Muncul',
+                    label: 'Frequency of Numbers Appearing',
                     data: new Array(10).fill(0),
                     backgroundColor: 'rgba(0, 183, 255, 0.5)',
                     borderColor: 'rgba(0, 183, 255, 1)',
