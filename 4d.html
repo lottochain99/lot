@@ -266,7 +266,7 @@ button:hover {
     <canvas id="chartNumbers"></canvas>
     <br>
 
-    <div id="stats" style="text-align: right;">
+    <div id="stats" style="text-align: left;">
     <p>🔢 Angka Paling Sering Muncul: <span id="mostFrequent"><b>-</b></span></p>
     <p>📉 Angka Paling Jarang Muncul: <span id="leastFrequent"><b>-</b></span></p>
     <p>📊 Total Angka Dihasilkan: <span id="totalGenerated"><b>0</b></span></p>
@@ -276,7 +276,7 @@ button:hover {
     <div id="predictionArea">
     <h2>AI Prediction</h2>
     <p><b>Enter Official Result:</b><br>
-    <input type="text" id="lastInput" maxlength="4" placeholder="e.g 4D" /></p>
+    <input type="number" id="lastInput" maxlength="4" placeholder="e.g 4D" /></p>
     <button onclick="generatePrediction()">Analyze & Predict</button>
     <div id="predictionOutput" style="margin-top: 20px; font-size: 1.2rem;"></div>
   </div><br>
