@@ -301,58 +301,55 @@ button:hover {
     let chartNumbers;
 
     function generateRandomNumbers() {
-        let chart = [0, 0, 0, 0];
-        let elements = [
-            document.getElementById("num1"),
-            document.getElementById("num2"),
-            document.getElementById("num3"),
-            document.getElementById("num4")
-        ];
-        let interval = [];
+      let digits = [0, 0, 0, 0];
+      let elements = [
+        document.getElementById("num1"),
+        document.getElementById("num2"),
+        document.getElementById("num3"),
+        document.getElementById("num4")
+      ];
+      let intervals = [];
 
+      for (let i = 0; i < 4; i++) {
+        intervals[i] = setInterval(() => {
+          digits[i] = Math.floor(Math.random() * 10);
+          elements[i].textContent = digits[i];
+        }, 50);
+      }
+
+      setTimeout(() => {
         for (let i = 0; i < 4; i++) {
-            interval[i] = setInterval(() => {
-                chart[i] = Math.floor(Math.random() * 10);
-                elements[i].textContent = chart[i];
-            }, 50);
+          clearInterval(intervals[i]);
+          elements[i].classList.add("shake");
+          setTimeout(() => {
+            elements[i].classList.remove("shake");
+          }, 500);
         }
-
-        setTimeout(() => {
-            for (let i = 0; i < 4; i++) {
-                clearInterval(interval[i]);
-
-                elements[i].classList.add("shake");
-                setTimeout(() => {
-                    elements[i].classList.remove("shake");
-                }, 500);
-            }
-
-            saveToHistory(chart.join(""));
-            updateChart();
-        }, 2500);
+        saveToHistory(digits.join(""));
+        updateChart();
+      }, 2500);
     }
 
     function saveToHistory(newNumber) {
-        let history = JSON.parse(localStorage.getItem("history")) || [];
-        if (history.length >= 50) history.shift();
-        history.push(newNumber);
-        localStorage.setItem("history", JSON.stringify(history));
+      let history = JSON.parse(localStorage.getItem("history")) || [];
+      if (history.length >= 50) history.shift();
+      history.push(newNumber);
+      localStorage.setItem("history", JSON.stringify(history));
     }
 
     function updateChart() {
-        let history = JSON.parse(localStorage.getItem("history")) || [];
-        let frequency = new Array(10).fill(0);
-
-        history.forEach(entry => {
-            entry.split("").forEach(num => {
-                frequency[parseInt(num)]++;
-            });
+      let history = JSON.parse(localStorage.getItem("history")) || [];
+      let frequency = new Array(10).fill(0);
+      history.forEach(entry => {
+        entry.split("").forEach(num => {
+          frequency[parseInt(num)]++;
         });
+      });
 
-        chartNumbers.data.datasets[0].data = frequency;
-        chartNumbers.update();
+      chartNumbers.data.datasets[0].data = frequency;
+      chartNumbers.update();
 
-        updateStats(frequency);
+      updateStats(frequency);
     }
 
     function updateStats(frequency) {
@@ -457,6 +454,38 @@ function downloadChart() {
     }
     return digits;
   }
+
+chartNumbers = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+      datasets: [{
+        label: 'Frequency of Appeared Numbers',
+        data: new Array(10).fill(0),
+        backgroundColor: 'rgba(0, 183, 255, 0.5)',
+        borderColor: 'rgba(0, 183, 255, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Event listener untuk membatasi input 4 digit
+  document.getElementById("lastInput").addEventListener("input", function () {
+    if (this.value.length > 4) {
+      this.value = this.value.slice(0, 4);
+    }
+  });
+
+  updateChart();
+};
     </script>
 
 </body>
