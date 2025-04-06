@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LottoBalls | 4D Random Numbers</title>
+    <title>Lotto Chain | 4D Random Numbers</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -42,6 +42,8 @@ h2 {
     margin-top: 20px;
     flex-wrap: wrap;
     justify-content: center;
+    max-width: 1200px;
+    width: 100%;
 }
 
 .number {
@@ -212,7 +214,7 @@ button:hover {
 
 <body>
 
-    <h1>🎰 Random Numbers 🎰</h1>
+    <h1>Random Numbers</h1>
 
     <div id="container">
         <div class="number" id="num1">0</div>
@@ -227,7 +229,7 @@ button:hover {
     </div>
 
     <br><br>
-    <canvas id="angkaChart"></canvas>
+    <canvas id="chartNumbers"></canvas>
     <br>
 
     <div id="stats">
@@ -248,14 +250,14 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
 
     <!-- Footer -->
        <div class="footer">
-           © 2025 Lotto Chain. All rights reserved. Play responsibly.
+           © Powered By Lotto Chain. 2025 All rights reserved. Play responsibly.
        </div>
 
     <script>
-        let angkaChart;
+        let chartNumbers;
 
         function generateRandomNumbers() {
-            let angka = [0, 0, 0, 0];
+            let chart = [0, 0, 0, 0];
             let elements = [
                 document.getElementById("num1"),
                 document.getElementById("num2"),
@@ -267,8 +269,8 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
             // Animasi angka berputar
             for (let i = 0; i < 4; i++) {
                 interval[i] = setInterval(() => {
-                    angka[i] = Math.floor(Math.random() * 10);
-                    elements[i].textContent = angka[i];
+                    chart[i] = Math.floor(Math.random() * 10);
+                    elements[i].textContent = chart[i];
                 }, 50);
             }
 
@@ -284,7 +286,7 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
             elements[i].classList.remove("shake");
         }, 500);
     }
-    saveToHistory(angka.join(""));
+    saveToHistory(chart.join(""));
     updateChart();
 }, 2500);
         }
@@ -306,8 +308,8 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
                 });
             });
 
-            angkaChart.data.datasets[0].data = frequency;
-            angkaChart.update();
+            chartNumbers.data.datasets[0].data = frequency;
+            chartNumbers.update();
 
             updateStats(frequency);
         }
@@ -326,7 +328,7 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
         }
 
         function copyToClipboard() {
-            let angka = [
+            let chart = [
                 document.getElementById("num1").textContent,
                 document.getElementById("num2").textContent,
                 document.getElementById("num3").textContent,
@@ -334,13 +336,13 @@ Dapatkan angka acak untuk keperluan undian, perhitungan, atau sekadar bersenang-
             ].join("");
 
             navigator.clipboard.writeText(angka).then(() => {
-                alert("Angka berhasil disalin: " + angka);
+                alert("Angka berhasil disalin: " + chart);
             });
         }
 
         window.onload = function () {
             let ctx = document.getElementById('angkaChart').getContext('2d');
-            angkaChart = new Chart(ctx, {
+            chartNumbers = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
