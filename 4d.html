@@ -275,9 +275,10 @@ button:hover {
 
     <div id="predictionArea">
     <h2>AI Prediction</h2>
+     <button onclick="resetPrediction()" style="position: absolute; top: 10px; right: 10px; background-color: crimson; color: white; border: none; padding: 6px 12px; border-radius: 4px;">Reset</button>
     <p><b>Enter Official Result:</b><br>
     <input type="text" id="lastInput" maxlength="4" placeholder="e.g 4D" /></p>
-    <br><button onclick="generatePrediction()">Analyze & Predict</button>
+    <button onclick="generatePrediction()">Analyze & Predict</button>
     <div id="predictionOutput" style="margin-top: 20px; font-size: 1.2rem;"></div>
   </div><br>
 
@@ -447,6 +448,11 @@ function downloadChart() {
 
     document.getElementById("predictionOutput").innerHTML = output;
   }
+    document.getElementById("predictionOutput").innerHTML = "";
+  }
+
+    function resetPrediction() {
+  document.getElementById("lastInput").value = "";
 
   function randomDigits(length) {
     let digits = "";
